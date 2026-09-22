@@ -69,6 +69,9 @@ svg{display:block}
 .top-t{flex:1;min-width:0}
 .top-t h1{font-size:clamp(14px,1.02rem + .35vw,17px);font-weight:700;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top-t p{font-size:11px;color:var(--tx3);margin-top:2px}
+/* 店长合并账号(zbc)登录后出现的门店切换器：默认隐藏，仅 all 模式显示 */
+.store-switcher{margin-top:8px;appearance:none;-webkit-appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;border:1px solid rgba(0,0,0,.12);border-radius:11px;padding:5px 30px 5px 11px;font-size:12.5px;font-weight:600;color:#1f2937;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.04);max-width:210px}
+.store-switcher:focus{outline:none;border-color:#168cff}
 
 /* 时间进度圆环：绝对定位挂右上角，不撑高头部（保持 v10 高度） */
 .tp-ring{
@@ -1472,7 +1475,7 @@ body[data-board="ops"] .ai-stage.done:after,body[data-board="ops"] .ai-stage.on:
   .side{display:contents!important}
   .top{position:sticky!important;top:calc(8px + var(--safeT))!important;z-index:90!important;width:calc(100% - 24px)!important;margin:8px 12px 0!important;padding:12px 14px 11px!important;border-radius:24px!important}
   .top-row{padding-right:72px!important}.logo{width:38px!important;height:38px!important;border-radius:13px!important}.tp{margin-top:9px!important}.tp-ring{right:8px!important;top:7px!important;width:62px!important;height:62px!important}
-  .top .v111-logout{right:11px!important;top:70px!important}
+  .top .v111-logout{right:72px!important;top:66px!important}
   #app .wrap,.ai-wrap{padding-left:14px!important;padding-right:14px!important;padding-bottom:28px!important}
   .tabs{position:fixed!important;left:14px!important;right:14px!important;bottom:calc(14px + var(--safeB))!important;top:auto!important;z-index:140!important;width:auto!important;height:66px!important;margin:0!important;padding:5px!important;display:flex!important;gap:3px!important;align-items:stretch!important;border-radius:33px!important;background:linear-gradient(180deg,rgba(255,255,255,.40),rgba(255,255,255,.20))!important;border:1px solid rgba(255,255,255,.82)!important;backdrop-filter:blur(18px) saturate(140%)!important;-webkit-backdrop-filter:blur(18px) saturate(140%)!important;box-shadow:0 13px 32px rgba(43,55,70,.11),inset 0 1px 0 rgba(255,255,255,.98)!important}
   .tab{min-width:0!important;flex:1 1 0!important;padding:7px 3px 6px!important;border-radius:27px!important;gap:1px!important;color:rgba(42,50,59,.62)!important;background:transparent!important}
@@ -2221,6 +2224,10 @@ body[data-board="ops"] :is(.ai-action-target,.ai-action-standard,.ai-action-resu
       <div class="top-t">
         <h1 id="storeName">华为李家村万达授权体验店</h1>
         <p><span id="dataDate">--</span> · <span class="badge-live" id="liveTag">数据已更新</span></p>
+        <select id="storeSwitcher" class="store-switcher" style="display:none" onchange="switchStore(this.value)" aria-label="切换门店">
+          <option value="ljc">李家村万达店</option>
+          <option value="hyc">华阳城合作店</option>
+        </select>
       </div>
       <div class="tp-ring" id="tpRing"></div>
     </div>
@@ -2311,15 +2318,18 @@ const CFG = {
 };
 
 let DATA = EMBEDDED_DATA_LJC;
+let MODE = 'ljc';   /* ljc/hyc = 单店隔离；all = 店长合并账号(zbc)可切换两店 */
 
 /* ===== 登录门（克隆 kucun v111 行为与报错文案） ===== */
-/* 账号=员工姓名，密码统一 1；姓名→门店归属决定登录后看板 */
+/* 账号=员工姓名，密码统一 1；姓名→门店归属决定登录后看板；zbc=店长合并账号，进去可切两店 */
 const STORE_PASSWORD = '1';
 const STORE_ACCOUNTS = {
   /* 李家村万达 */
   '邵乐乐':'ljc', '杨丽华':'ljc', '李泽':'ljc', '张博晨':'ljc',
   /* 华阳城 */
-  '张梅B':'hyc', '李俊琪':'hyc', '王莹莹B':'hyc', '张赫桐':'hyc', '田蕊':'hyc'
+  '张梅B':'hyc', '李俊琪':'hyc', '王莹莹B':'hyc', '张赫桐':'hyc', '田蕊':'hyc',
+  /* 店长合并账号：登录后可切李家村/华阳城 */
+  'zbc':'all'
 };
 function doLogin(ev){
   ev.preventDefault();
@@ -2355,9 +2365,29 @@ function doLogout(){
 const LOGIN_KEY = 'storyos_login_v1';
 const LOGIN_TTL_MS = 6 * 60 * 60 * 1000;    /* 6 小时：登录后半天内免登录，超过需重新登录 */
 function loginApply(store){
-  DATA = (store === 'hyc') ? EMBEDDED_DATA_HYC : EMBEDDED_DATA_LJC;
+  MODE = store;                                  // 'ljc' | 'hyc' | 'all'
+  if(store === 'all'){
+    DATA = EMBEDDED_DATA_LJC;                    // 合并账号默认进李家村，再用切换器切华阳城
+    setSwitcher(true);
+  }else{
+    DATA = (store === 'hyc') ? EMBEDDED_DATA_HYC : EMBEDDED_DATA_LJC;
+    setSwitcher(false);                          // 单店隔离账号不显示切换器
+  }
   render();
   document.getElementById('loginGate').classList.add('hide');
+}
+/* 店长合并账号(zbc)下的门店切换：仅 all 模式生效 */
+function switchStore(store){
+  if(MODE !== 'all') return;
+  DATA = (store === 'hyc') ? EMBEDDED_DATA_HYC : EMBEDDED_DATA_LJC;
+  render();                                      // 依据 DATA.meta 自动刷新店名/日期/进度环
+  const sel = document.getElementById('storeSwitcher');
+  if(sel) sel.value = store;
+}
+/* 切换器显隐：all 模式显示，单店账号隐藏 */
+function setSwitcher(on){
+  const sel = document.getElementById('storeSwitcher');
+  if(sel) sel.style.display = on ? '' : 'none';
 }
 function loginPersist(store){ try{ localStorage.setItem(LOGIN_KEY, store + '|' + Date.now()); }catch(e){} }
 function loginClear(){ try{ localStorage.removeItem(LOGIN_KEY); }catch(e){} }
@@ -2370,11 +2400,18 @@ function loginRestore(){
   const store = i > 0 ? raw.slice(0, i) : raw;                  /* 兼容不带时间戳的旧格式 */
   const t = i > 0 ? parseInt(raw.slice(i + 1), 10) : 0;
   const expired = !t || !isFinite(t) || (Date.now() - t) > LOGIN_TTL_MS;
-  if((store !== 'ljc' && store !== 'hyc') || expired){
+  if((store !== 'ljc' && store !== 'hyc' && store !== 'all') || expired){
     if(i > 0) loginClear();                                     /* 旧格式先放行一次、下次写入带时间戳 */
     return false;
   }
-  DATA = (store === 'hyc') ? EMBEDDED_DATA_HYC : EMBEDDED_DATA_LJC;
+  MODE = store;
+  if(store === 'all'){
+    DATA = EMBEDDED_DATA_LJC;                                   // 合并账号恢复默认进李家村
+    setSwitcher(true);
+  }else{
+    DATA = (store === 'hyc') ? EMBEDDED_DATA_HYC : EMBEDDED_DATA_LJC;
+    setSwitcher(false);
+  }
   document.getElementById('loginGate').classList.add('hide');
   return true;
 }
