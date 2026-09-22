@@ -2178,9 +2178,8 @@ body[data-board="ops"] :is(.ai-action-target,.ai-action-standard,.ai-action-resu
   border:1px solid rgba(120,130,160,.28);background:rgba(255,255,255,.55);color:#64748b;
   padding:0 10px;height:22px;border-radius:11px;
   font:inherit;font-size:10.5px;font-weight:700;cursor:pointer;opacity:.85;transition:.15s;}
-.top .v111-logout{position:fixed;z-index:80;right:13px;top:144px;margin-left:0}
-/* 桌面≥1024：退出按钮上移，与主区「整体进度一览」标题水平对齐（cy≈56）；左移 88px 避开进度环 */
-@media(min-width:1024px){.top .v111-logout{right:88px;top:20px}}
+.top .v111-logout{position:static;margin-left:auto}
+/* 退出按钮已并入 .tp-h（本月时间进度）flex 行，随固定头部定位、与标题垂直居中，不再用 fixed+magic top */
 .v111-logout:hover{opacity:1;color:#b42318;border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.06)}
 @media(prefers-color-scheme:dark){
   .login-gate{background:linear-gradient(180deg,#151517 0%,#09090b 56%,#000 100%);}
@@ -2227,14 +2226,13 @@ body[data-board="ops"] :is(.ai-action-target,.ai-action-standard,.ai-action-resu
     <div class="tp">
       <div class="tp-h">
         <span>本月时间进度</span>
+        <button class="v111-logout" onclick="doLogout()" title="退出登录，切换门店">退出</button>
       </div>
       <div class="tp-bar-row">
         <div class="tp-bar"><div class="tp-fill" id="tpFill" style="width:0"></div></div>
         <span class="tp-days" id="tpDays">剩 -- 天</span>
       </div>
     </div>
-
-    <button class="v111-logout" onclick="doLogout()" title="退出登录，切换门店">退出</button>
   </header>
 
   <nav class="tabs" id="tabs"></nav>
