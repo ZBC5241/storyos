@@ -2178,7 +2178,9 @@ body[data-board="ops"] :is(.ai-action-target,.ai-action-standard,.ai-action-resu
   border:1px solid rgba(120,130,160,.28);background:rgba(255,255,255,.55);color:#64748b;
   padding:0 10px;height:22px;border-radius:11px;
   font:inherit;font-size:10.5px;font-weight:700;cursor:pointer;opacity:.85;transition:.15s;}
-.top .v111-logout{position:absolute;right:13px;top:138px;margin-left:0}
+.top .v111-logout{position:fixed;z-index:80;right:13px;top:138px;margin-left:0}
+/* 桌面≥1024：退出按钮上移，与主区「整体进度一览」标题水平对齐（cy≈56）；左移 88px 避开进度环 */
+@media(min-width:1024px){.top .v111-logout{right:88px;top:21px}}
 .v111-logout:hover{opacity:1;color:#b42318;border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.06)}
 @media(prefers-color-scheme:dark){
   .login-gate{background:linear-gradient(180deg,#151517 0%,#09090b 56%,#000 100%);}
