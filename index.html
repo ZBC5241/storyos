@@ -2337,19 +2337,57 @@ function doLogin(ev){
     return false;
   }
   err.textContent = '';
-  DATA = (store === 'hyc') ? EMBEDDED_DATA_HYC : EMBEDDED_DATA_LJC;
-  render();                                   // render() 已自刷新店名/日期/进度
-  document.getElementById('loginGate').classList.add('hide');
+  loginApply(store);                          // 切店 + 渲染（render() 已自刷新店名/日期/进度）
+  loginPersist(store);                        // 记住登录：刷新 / 手机下拉刷新后不再退回登录门
   pass.value = '';
   return false;
 }
 function doLogout(){
+  loginClear();                               // 清除记住的登录态，退出即需重新登录
   document.getElementById('loginGate').classList.remove('hide');
   document.getElementById('v111User').value = '';
   document.getElementById('v111Pass').value = '';
   document.getElementById('v111LoginError').textContent = '';
   document.getElementById('v111User').focus();
 }
+
+/* ===== 登录态持久化：手机下拉刷新/重新加载后不再退回登录门；有效期 6 小时，超时或点「退出」即清除 ===== */
+const LOGIN_KEY = 'storyos_login_v1';
+const LOGIN_TTL_MS = 6 * 60 * 60 * 1000;    /* 6 小时：登录后半天内免登录，超过需重新登录 */
+function loginApply(store){
+  DATA = (store === 'hyc') ? EMBEDDED_DATA_HYC : EMBEDDED_DATA_LJC;
+  render();
+  document.getElementById('loginGate').classList.add('hide');
+}
+function loginPersist(store){ try{ localStorage.setItem(LOGIN_KEY, store + '|' + Date.now()); }catch(e){} }
+function loginClear(){ try{ localStorage.removeItem(LOGIN_KEY); }catch(e){} }
+/* 读取登录态：返回 true=仍有效（已进看板）；过期/非法则清除并返回 false */
+function loginRestore(){
+  let raw = null;
+  try{ raw = localStorage.getItem(LOGIN_KEY); }catch(e){}
+  if(!raw) return false;
+  const i = raw.indexOf('|');
+  const store = i > 0 ? raw.slice(0, i) : raw;                  /* 兼容不带时间戳的旧格式 */
+  const t = i > 0 ? parseInt(raw.slice(i + 1), 10) : 0;
+  const expired = !t || !isFinite(t) || (Date.now() - t) > LOGIN_TTL_MS;
+  if((store !== 'ljc' && store !== 'hyc') || expired){
+    if(i > 0) loginClear();                                     /* 旧格式先放行一次、下次写入带时间戳 */
+    return false;
+  }
+  DATA = (store === 'hyc') ? EMBEDDED_DATA_HYC : EMBEDDED_DATA_LJC;
+  document.getElementById('loginGate').classList.add('hide');
+  return true;
+}
+/* 切回页面时再校验一次：会话已过期就退回登录门 */
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState !== 'visible') return;
+  let raw = null;
+  try{ raw = localStorage.getItem(LOGIN_KEY); }catch(e){}
+  if(!raw) return;                                              /* 已退出登录，无需处理 */
+  const i = raw.indexOf('|');
+  const t = i > 0 ? parseInt(raw.slice(i + 1), 10) : 0;
+  if(!t || !isFinite(t) || (Date.now() - t) > LOGIN_TTL_MS) doLogout();
+});
 
 const AI_HASH_VIEW = {'#ops':'insight','#ops-insight':'insight','#insight':'insight','#ai-team':'aiteam','#ai-action':'aiaction','#ai-customer':'aicustomer','#ai-review':'aireview'};
 let VIEW = AI_HASH_VIEW[location.hash] || (location.hash === '#qudao' ? 'qudao' : 'store');
@@ -5550,6 +5588,7 @@ function hasTaskRaw(k){ return k && typeof k.task === 'number' && isFinite(k.tas
    ========================================================== */
 $('#actionClose').onclick = closeInsightAction;
 $('#actionMask').onclick = e => { if(e.target === $('#actionMask')) closeInsightAction(); };
+loginRestore();   /* 已登录过则直接进对应门店看板：刷新 / 手机下拉刷新不再退回登录门 */
 render();
 
 /* 首次加载：若有目标已 100% 达成，撒一次彩带 */
