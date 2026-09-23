@@ -66,12 +66,16 @@ svg{display:block}
 .logo:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(124,58,237,.45)}
 .logo:active{transform:scale(.93)}
 .logo.on{background:linear-gradient(135deg,#f59e0b,#f97316);box-shadow:0 4px 16px rgba(245,158,11,.55)}
-.top-t{flex:1;min-width:0}
+.top-t{flex:1;min-width:0;position:relative}
 .top-t h1{font-size:clamp(14px,1.02rem + .35vw,17px);font-weight:700;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top-t p{font-size:11px;color:var(--tx3);margin-top:2px}
-/* 店长合并账号(zbc)登录后出现的门店切换器：默认隐藏，仅 all 模式显示 */
-.store-switcher{margin-top:8px;appearance:none;-webkit-appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;border:1px solid rgba(0,0,0,.12);border-radius:11px;padding:5px 30px 5px 11px;font-size:12.5px;font-weight:600;color:#1f2937;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.04);max-width:210px}
-.store-switcher:focus{outline:none;border-color:#168cff}
+/* 店长合并账号(zbc)：点击顶部门店名称弹出的门店菜单（自定义浮层，absolute 定位不撑卡片高度） */
+.store-menu{position:absolute;left:0;top:calc(100% + 6px);z-index:80;min-width:196px;background:#fff;border-radius:13px;box-shadow:0 12px 34px rgba(15,23,42,.18),0 2px 6px rgba(15,23,42,.06);padding:6px;display:none}
+.store-menu.open{display:block}
+.store-menu-item{display:block;width:100%;text-align:left;appearance:none;-webkit-appearance:none;border:0;background:transparent;font-family:inherit;font-size:14px;font-weight:600;color:#1f2937;padding:11px 14px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.store-menu-item:hover,.store-menu-item:active{background:rgba(10,132,255,.09)}
+/* all 模式：门店名称本身可点（不加任何占位元素，保持与 shop 顶栏门店信息像素级一致） */
+.top-t h1.store-clickable{cursor:pointer;user-select:none}
 
 /* 时间进度圆环：绝对定位挂右上角，不撑高头部（保持 v10 高度） */
 .tp-ring{
@@ -101,7 +105,7 @@ svg{display:block}
 
 /* 时间进度：tp 区保持 v10 紧凑样式（小数字+进度条+剩余天数） */
 .tp{margin-top:11px}
-.tp-h{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--tx3);margin-bottom:5px;min-height:22px}
+.tp-h{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--tx3);margin-bottom:5px}
 .tp-h b{color:var(--tx);font-weight:700}
 .tp-bar-row{display:flex;align-items:center;gap:8px;margin-top:6px}
 .tp-bar{flex:1;height:7px;border-radius:5px;background:var(--soft);overflow:hidden;position:relative}
@@ -1475,7 +1479,7 @@ body[data-board="ops"] .ai-stage.done:after,body[data-board="ops"] .ai-stage.on:
   .side{display:contents!important}
   .top{position:sticky!important;top:calc(8px + var(--safeT))!important;z-index:90!important;width:calc(100% - 24px)!important;margin:8px 12px 0!important;padding:12px 14px 11px!important;border-radius:24px!important}
   .top-row{padding-right:72px!important}.logo{width:38px!important;height:38px!important;border-radius:13px!important}.tp{margin-top:9px!important}.tp-ring{right:8px!important;top:7px!important;width:62px!important;height:62px!important}
-  .top .v111-logout{right:72px!important;top:66px!important}
+  .top .v111-logout{right:72px!important;top:63px!important}
   #app .wrap,.ai-wrap{padding-left:14px!important;padding-right:14px!important;padding-bottom:28px!important}
   .tabs{position:fixed!important;left:14px!important;right:14px!important;bottom:calc(14px + var(--safeB))!important;top:auto!important;z-index:140!important;width:auto!important;height:66px!important;margin:0!important;padding:5px!important;display:flex!important;gap:3px!important;align-items:stretch!important;border-radius:33px!important;background:linear-gradient(180deg,rgba(255,255,255,.40),rgba(255,255,255,.20))!important;border:1px solid rgba(255,255,255,.82)!important;backdrop-filter:blur(18px) saturate(140%)!important;-webkit-backdrop-filter:blur(18px) saturate(140%)!important;box-shadow:0 13px 32px rgba(43,55,70,.11),inset 0 1px 0 rgba(255,255,255,.98)!important}
   .tab{min-width:0!important;flex:1 1 0!important;padding:7px 3px 6px!important;border-radius:27px!important;gap:1px!important;color:rgba(42,50,59,.62)!important;background:transparent!important}
@@ -2224,10 +2228,10 @@ body[data-board="ops"] :is(.ai-action-target,.ai-action-standard,.ai-action-resu
       <div class="top-t">
         <h1 id="storeName">华为李家村万达授权体验店</h1>
         <p><span id="dataDate">--</span> · <span class="badge-live" id="liveTag">数据已更新</span></p>
-        <select id="storeSwitcher" class="store-switcher" style="display:none" onchange="switchStore(this.value)" aria-label="切换门店">
-          <option value="ljc">李家村万达店</option>
-          <option value="hyc">华阳城合作店</option>
-        </select>
+        <div id="storeMenu" class="store-menu" role="menu">
+          <button type="button" class="store-menu-item" data-store="ljc" onclick="pickStore('ljc')" role="menuitem">李家村万达店</button>
+          <button type="button" class="store-menu-item" data-store="hyc" onclick="pickStore('hyc')" role="menuitem">华阳城合作店</button>
+        </div>
       </div>
       <div class="tp-ring" id="tpRing"></div>
     </div>
@@ -2376,19 +2380,49 @@ function loginApply(store){
   render();
   document.getElementById('loginGate').classList.add('hide');
 }
-/* 店长合并账号(zbc)下的门店切换：仅 all 模式生效 */
+/* 店长合并账号(zbc)下的门店切换：仅 all 模式生效；入口=点击顶部门店名称 */
 function switchStore(store){
   if(MODE !== 'all') return;
   DATA = (store === 'hyc') ? EMBEDDED_DATA_HYC : EMBEDDED_DATA_LJC;
   render();                                      // 依据 DATA.meta 自动刷新店名/日期/进度环
-  const sel = document.getElementById('storeSwitcher');
-  if(sel) sel.value = store;
+  closeStoreMenu();
 }
-/* 切换器显隐：all 模式显示，单店账号隐藏 */
+/* 点「门店名称」展开/收起门店菜单 */
+function toggleStoreMenu(ev){
+  if(MODE !== 'all') return;
+  if(ev && ev.stopPropagation) ev.stopPropagation();
+  const m = document.getElementById('storeMenu');
+  if(!m) return;
+  const h1 = document.getElementById('storeName');
+  const open = m.classList.toggle('open');
+  if(h1) h1.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+function closeStoreMenu(){
+  const m = document.getElementById('storeMenu');
+  if(m) m.classList.remove('open');
+  const h1 = document.getElementById('storeName');
+  if(h1) h1.setAttribute('aria-expanded', 'false');
+}
+function pickStore(store){
+  switchStore(store);                            // switchStore 内部会收起菜单
+}
+/* 店名可点性：all 模式店名可点开菜单；单店账号不可点 */
 function setSwitcher(on){
-  const sel = document.getElementById('storeSwitcher');
-  if(sel) sel.style.display = on ? '' : 'none';
+  const h1 = document.getElementById('storeName');
+  if(h1){
+    h1.classList.toggle('store-clickable', !!on);
+    if(on){ h1.setAttribute('onclick', 'toggleStoreMenu(event)'); h1.setAttribute('title', '点击切换门店'); }
+    else { h1.removeAttribute('onclick'); h1.removeAttribute('title'); h1.setAttribute('aria-expanded', 'false'); }
+  }
+  if(!on) closeStoreMenu();
 }
+/* 点击菜单以外的区域，收起菜单 */
+document.addEventListener('click', function(e){
+  const m = document.getElementById('storeMenu');
+  if(!m || !m.classList.contains('open')) return;
+  if(e.target && e.target.closest && (e.target.closest('#storeName') || e.target.closest('#storeMenu'))) return;
+  closeStoreMenu();
+});
 function loginPersist(store){ try{ localStorage.setItem(LOGIN_KEY, store + '|' + Date.now()); }catch(e){} }
 function loginClear(){ try{ localStorage.removeItem(LOGIN_KEY); }catch(e){} }
 /* 读取登录态：返回 true=仍有效（已进看板）；过期/非法则清除并返回 false */
