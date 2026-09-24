@@ -2157,6 +2157,8 @@ body[data-board="ops"] :is(.ai-action-target,.ai-action-standard,.ai-action-resu
 .login-gate{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;padding:24px;
   background:linear-gradient(180deg,#fafafa 0%,#f2f2f7 52%,#e9e9ee 100%);}
 .login-gate.hide{display:none}
+/* 防登录门闪现（FOUC）：head 同步脚本在渲染前判定登录态，已登录则首帧即隐藏登录门 */
+html.authed .login-gate{display:none!important}
 .v111-login{width:100%;display:flex;align-items:center;justify-content:center}
 .v111-login-card{width:min(100%,400px);padding:34px 28px 24px;
   background-color:rgba(248,248,250,.78);
@@ -2204,6 +2206,20 @@ body[data-board="ops"] :is(.ai-action-target,.ai-action-standard,.ai-action-resu
 </style>
 
 </head>
+<script>
+/* 防登录门闪现（FOUC）：body 渲染前同步判定登录态，已登录（6h 内）则首帧即隐藏登录门。
+   与主脚本 LOGIN_KEY/LOGIN_TTL_MS(6h) 口径一致；未登录不加标记，登录门正常显示 */
+(function(){
+  try{
+    var raw = localStorage.getItem('storyos_login_v1') || '';
+    var i = raw.indexOf('|');
+    var store = i > 0 ? raw.slice(0, i) : raw;
+    var t = i > 0 ? parseInt(raw.slice(i + 1), 10) : 0;
+    var ok = (store === 'ljc' || store === 'hyc' || store === 'all') && t && isFinite(t) && (Date.now() - t) <= 21600000;
+    if(ok) document.documentElement.classList.add('authed');
+  }catch(e){}
+})();
+</script>
 <body>
 
 <!-- ===== 登录门（逐字克隆 kucun 仓库 v111 登录页） ===== -->
@@ -2358,6 +2374,7 @@ function doLogin(ev){
 }
 function doLogout(){
   loginClear();                               // 清除记住的登录态，退出即需重新登录
+  document.documentElement.classList.remove('authed');   // 同步解除首帧隐藏标记
   document.getElementById('loginGate').classList.remove('hide');
   document.getElementById('v111User').value = '';
   document.getElementById('v111Pass').value = '';
@@ -2379,6 +2396,7 @@ function loginApply(store){
   }
   render();
   document.getElementById('loginGate').classList.add('hide');
+  document.documentElement.classList.add('authed');   /* 同步首帧隐藏标记（防下拉刷新闪登录页） */
 }
 /* 店长合并账号(zbc)下的门店切换：仅 all 模式生效；入口=点击顶部门店名称 */
 function switchStore(store){
