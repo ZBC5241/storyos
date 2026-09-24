@@ -2920,12 +2920,23 @@ function ringSVG(rate, s, size){
   const w = isNum(rate) ? Math.min(rate, 1) : 0;
   const off = c * (1 - w);
   const col = {done:'#ef4444', over:'#ef4444', on:'#f59e0b', low:'#22c55e', zero:'#ef4444', na:'#9aa0bd'}[s] || '#9aa0bd';
+  /* 凹槽分隔：进度弧底下垫一条面板色宽弧，把灰轨道与彩色进度柔性隔开（交界不再生硬） */
+  const groove = '<circle cx="' + (size/2) + '" cy="' + (size/2) + '" r="' + r + '" fill="none" stroke="var(--panel)" stroke-width="14"'
+    + ' stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + c.toFixed(1) + '" data-off="' + off.toFixed(1) + '"'
+    + ' transform="rotate(-90 ' + (size/2) + ' ' + (size/2) + ')" style="transition:stroke-dashoffset 1s cubic-bezier(.22,1,.36,1)"/>';
+  const arc = '<circle cx="' + (size/2) + '" cy="' + (size/2) + '" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="10" stroke-linecap="round"'
+    + ' stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + c.toFixed(1) + '" data-off="' + off.toFixed(1) + '"'
+    + ' transform="rotate(-90 ' + (size/2) + ' ' + (size/2) + ')" style="transition:stroke-dashoffset 1s cubic-bezier(.22,1,.36,1)"/>';
   return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">'
     + '<circle cx="' + (size/2) + '" cy="' + (size/2) + '" r="' + r + '" fill="none" stroke="rgba(30,28,60,.07)" stroke-width="10"/>'
-    + '<circle cx="' + (size/2) + '" cy="' + (size/2) + '" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="10" stroke-linecap="round"'
-    + ' stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '"'
-    + ' transform="rotate(-90 ' + (size/2) + ' ' + (size/2) + ')" style="transition:stroke-dashoffset 1s cubic-bezier(.22,1,.36,1)"/>'
+    + groove + arc
     + '</svg>';
+}
+/* hero 环入场动画：先画空环，渲染后一帧再落到目标达成率（0 → 63% 动态过渡） */
+function animateHeroRings(){
+  requestAnimationFrame(() => {
+    $$('#app circle[data-off]').forEach(el => { el.style.strokeDashoffset = el.getAttribute('data-off'); });
+  });
 }
 
 /* ============ 今日图表：Donut(毛利占比) + Bar(增值排行) ============ */
@@ -5227,6 +5238,7 @@ function render(){
                day:renderDay, insight:renderInsight, aiteam:renderInsight, aiaction:renderInsight,
                aicustomer:renderInsight, aireview:renderInsight, qudao:renderQudao }[VIEW];
   $('#app').innerHTML = fn();
+  animateHeroRings();
   bindDynamic();
   window.scrollTo(0,0);
 }
