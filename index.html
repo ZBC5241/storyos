@@ -2215,11 +2215,7 @@ html.authed .login-gate{display:none!important}
 .d-item{position:absolute;left:0;top:50%;height:30px;transform-origin:left center;will-change:transform,opacity;display:flex;align-items:center;gap:8px;white-space:nowrap;pointer-events:none}
 .d-nm{font-weight:700;letter-spacing:.2px;white-space:nowrap;color:var(--tx,#1c1c1e);font-size:15px;line-height:1}
 .d-item:not(.cur) .d-nm{color:var(--tx2,#5b6270)}
-.d-rg{flex:0 0 auto;font-size:10px;color:var(--tx3,#9aa1ae);font-weight:600;padding:1px 6px;border-radius:5px;background:var(--soft,#f1f2f6);line-height:1.6}
-.cue{position:absolute;left:0;top:50%;width:0;height:0;margin-top:-2.5px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--tx3,#9aa1ae);opacity:.45;transform:translateX(var(--cue-x,0px)) translateY(6px);transition:transform .22s cubic-bezier(.22,1,.36,1),opacity .22s;pointer-events:none}
-.dock:hover .cue{opacity:.8}
-.dock.grabbing .cue{opacity:0}
-@media (max-width:640px){ .d-nm{font-size:15px} .d-rg{display:none} }
+@media (max-width:640px){ .d-nm{font-size:15px} }
 </style>
 
 </head>
@@ -2461,18 +2457,17 @@ function setSwitcher(on){
 
 /* ===== 方案二 Dock 店名切换控件（按下展开、拖拽拨动、松手收起切店）===== */
 const STORE_DOCKS = [
-  {n:'华为李家村万达授权体验店', r:'李家村', key:'ljc'},
-  {n:'华阳城合作店',             r:'华阳城', key:'hyc'},
+  {n:'华为李家村万达授权体验店', key:'ljc'},
+  {n:'华阳城合作店',             key:'hyc'},
 ];
 function makeStoreDock(root, opts){
   opts = opts || {};
   const track = root.querySelector('.dock-track');
   const onSettle = opts.onSettle || function(){};
   track.innerHTML = STORE_DOCKS.map((s,i)=>
-    `<div class="d-item" data-i="${i}"><span class="d-nm">${s.n}</span><span class="d-rg">${s.r}</span></div>`
+    `<div class="d-item" data-i="${i}"><span class="d-nm">${s.n}</span></div>`
   ).join('');
   const items = [...track.children];
-  const cue = document.createElement('span'); cue.className='cue'; root.appendChild(cue);
   let pos = opts.start||0, target = pos, open = 0, openTarget = 0;
   let animating=false, openAnimating=false, dragging=false;
   let startY=0, startPos=0, samples=[], lastSettled=Math.round(pos);
@@ -2495,8 +2490,6 @@ function makeStoreDock(root, opts){
       el.style.opacity=op.toFixed(3);
       el.classList.toggle('cur', abs<0.5);
     }
-    const cur=items.find(el=>el.classList.contains('cur'));
-    if(cur){ const nm=cur.querySelector('.d-nm'); const m=cur.style.transform.match(/scale\(([\d.]+)\)/); const sc=m?+m[1]:1; const right=nm.offsetLeft+nm.offsetWidth*sc; if(right+14>root.getBoundingClientRect().width) cue.style.opacity='0'; else { cue.style.setProperty('--cue-x',(right+7)+'px'); cue.style.opacity=''; } } else cue.style.opacity='0';
   }
   function animOpen(to){ openTarget=to; if(openAnimating) return; openAnimating=true; let v=0,prev=performance.now(); (function loop(now){ const dt=Math.min(34,now-prev)/16.67; prev=now; const f=(openTarget-open)*0.28; v+=(f-v*0.72)*dt; open+=v*dt; if(Math.abs(openTarget-open)<0.002 && Math.abs(v)<0.002){ open=openTarget; openAnimating=false; render(); return; } render(); requestAnimationFrame(loop); })(performance.now()); }
   function animTo(tp){ target=Math.max(0,Math.min(STORE_DOCKS.length-1,tp)); if(animating) return; animating=true; let v=0,prev=performance.now(); (function loop(now){ const dt=Math.min(34,now-prev)/16.67; prev=now; const f=(target-pos)*0.24; v+=(f-v*0.74)*dt; pos+=v*dt; if(Math.abs(target-pos)<0.002 && Math.abs(v)<0.002){ pos=target; animating=false; render(); if(Math.round(pos)!==lastSettled){ lastSettled=Math.round(pos); onSettle(lastSettled); } return; } render(); requestAnimationFrame(loop); })(performance.now()); }
