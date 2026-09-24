@@ -66,21 +66,15 @@ svg{display:block}
 .logo:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(124,58,237,.45)}
 .logo:active{transform:scale(.93)}
 .logo.on{background:linear-gradient(135deg,#f59e0b,#f97316);box-shadow:0 4px 16px rgba(245,158,11,.55)}
-.top-t{flex:1;min-width:0;position:relative}
-.top-t h1{font-size:15px;font-weight:700;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.top-t p{font-size:11px;color:var(--tx3);margin-top:2px}
-/* 店长合并账号(zbc)：点击顶部门店名称弹出的门店菜单（自定义浮层，absolute 定位不撑卡片高度） */
-.store-menu{position:absolute;left:0;top:calc(100% + 6px);z-index:80;min-width:196px;background:#fff;border-radius:13px;box-shadow:0 12px 34px rgba(15,23,42,.18),0 2px 6px rgba(15,23,42,.06);padding:6px;display:none}
-.store-menu.open{display:block}
-.store-menu-item{display:block;width:100%;text-align:left;appearance:none;-webkit-appearance:none;border:0;background:transparent;font-family:inherit;font-size:14px;font-weight:600;color:#1f2937;padding:11px 14px;border-radius:9px;cursor:pointer;white-space:nowrap}
-.store-menu-item:hover,.store-menu-item:active{background:rgba(10,132,255,.09)}
-/* all 模式：门店名称本身可点（不加任何占位元素，保持与 shop 顶栏门店信息像素级一致） */
-.top-t h1.store-clickable{cursor:pointer;user-select:none}
+.top-t{flex:1;min-width:0;display:grid;grid-template-rows:auto auto}
+.top-t h1{grid-row:1;grid-column:1;font-size:clamp(14px,1.02rem + .35vw,17px);font-weight:700;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-t .store-dock{grid-row:1;grid-column:1}
+.top-t p{grid-row:2;grid-column:1;font-size:11px;color:var(--tx3);margin-top:2px}
 
 /* 时间进度圆环：绝对定位挂右上角，不撑高头部（保持 v10 高度） */
 .tp-ring{
     position:absolute;
-    top:9px;
+    top:6px;
     right:13px;
     width:66px;
     height:66px;
@@ -1479,7 +1473,7 @@ body[data-board="ops"] .ai-stage.done:after,body[data-board="ops"] .ai-stage.on:
   body,body[data-board="ops"]{padding-bottom:calc(104px + var(--safeB))!important}
   .side{display:contents!important}
   .top{position:sticky!important;top:calc(8px + var(--safeT))!important;z-index:90!important;width:calc(100% - 24px)!important;margin:8px 12px 0!important;padding:12px 14px 11px!important;border-radius:24px!important}
-  .top-row{padding-right:72px!important}.logo{width:38px!important;height:38px!important;border-radius:13px!important}.tp{margin-top:9px!important}.tp-ring{right:8px!important;top:7px!important;width:62px!important;height:62px!important}
+  .top-row{padding-right:72px!important}.logo{width:38px!important;height:38px!important;border-radius:13px!important}.tp{margin-top:9px!important}.tp-ring{right:8px!important;top:4px!important;width:62px!important;height:62px!important}
   .top .v111-logout{right:72px!important;top:60px!important}
   #app .wrap,.ai-wrap{padding-left:14px!important;padding-right:14px!important;padding-bottom:28px!important}
   .tabs{position:fixed!important;left:14px!important;right:14px!important;bottom:calc(14px + var(--safeB))!important;top:auto!important;z-index:140!important;width:auto!important;height:66px!important;margin:0!important;padding:5px!important;display:flex!important;gap:3px!important;align-items:stretch!important;border-radius:33px!important;background:linear-gradient(180deg,rgba(255,255,255,.40),rgba(255,255,255,.20))!important;border:1px solid rgba(255,255,255,.82)!important;backdrop-filter:blur(18px) saturate(140%)!important;-webkit-backdrop-filter:blur(18px) saturate(140%)!important;box-shadow:0 13px 32px rgba(43,55,70,.11),inset 0 1px 0 rgba(255,255,255,.98)!important}
@@ -1792,7 +1786,7 @@ html.lg-deep{--lg-hi:.11;--lg-lift:.995;--lg-shadow-y:12px;--lg-shadow-a:.080}
 
 /* 全局字阶：减少“淡、碎、轻”的网页感 */
 body{letter-spacing:-.01em}
-.top-t h1,.sec-h h3{color:var(--release-title)!important;font-weight:780!important;letter-spacing:-.025em!important}
+.top-t h1,.top-t .d-nm,.sec-h h3{color:var(--release-title)!important;font-weight:780!important;letter-spacing:-.025em!important}
 .top-t p,.sec-h .tail{color:var(--release-sub)!important}
 .num,.kpi-v,.bt-v,.ring-c b,.ai-score-num,.ai-metric b,.v27-kpi b,.v29-kpi b{letter-spacing:-.035em!important}
 
@@ -2209,14 +2203,13 @@ html.authed .login-gate{display:none!important}
 <style id="store-dock-style">
 /* 方案二 Dock 店名切换（按下展开、拖拽拨动、松手收起切店）—— 仅 all 模式显示 */
 .store-dock{position:relative}
-.dock{position:relative;height:30px;margin-top:2px;cursor:grab;touch-action:none;overscroll-behavior:contain;user-select:none;-webkit-user-select:none}
+.dock{position:relative;height:100%;cursor:grab;touch-action:none;overscroll-behavior:contain;user-select:none;-webkit-user-select:none}
 .dock.grabbing{cursor:grabbing}
-.dock-view{position:relative;height:30px;overflow:visible}
-.dock-track{position:absolute;left:0;right:0;top:0;height:30px}
-.d-item{position:absolute;left:0;top:50%;height:30px;transform-origin:left center;will-change:transform,opacity;display:flex;align-items:center;gap:8px;white-space:nowrap;pointer-events:none}
-.d-nm{font-weight:700;letter-spacing:.2px;white-space:nowrap;color:var(--tx,#1c1c1e);font-size:15px;line-height:1}
+.dock-view{position:relative;height:100%;overflow:visible}
+.dock-track{position:absolute;left:0;right:0;top:0;height:100%}
+.d-item{position:absolute;left:0;width:100%;top:50%;height:30px;transform-origin:left center;will-change:transform,opacity;display:flex;align-items:center;gap:8px;white-space:normal;pointer-events:none}
+.d-nm{font-weight:700;letter-spacing:.2px;white-space:normal;color:var(--tx,#1c1c1e);font-size:clamp(14px,1.02rem + .35vw,17px);line-height:1.45}
 .d-item:not(.cur) .d-nm{color:var(--tx2,#5b6270)}
-@media (max-width:640px){ .d-nm{font-size:15px} }
 </style>
 
 </head>
@@ -2261,8 +2254,8 @@ html.authed .login-gate{display:none!important}
             <div class="dock-view"><div class="dock-track"></div></div>
           </div>
         </div>
+        <h1 id="storeName" class="store-name-fallback">华为李家村万达授权体验店</h1>
         <p><span id="dataDate">--</span> · <span class="badge-live" id="liveTag">数据已更新</span></p>
-        <h1 id="storeName" class="store-name-fallback" style="display:none">华为李家村万达授权体验店</h1>
       </div>
       <div class="tp-ring" id="tpRing"></div>
     </div>
@@ -2447,11 +2440,12 @@ function setSwitcher(on){
   const h1   = document.getElementById('storeName');
   if(on){
     if(dock) dock.hidden = false;
-    if(h1)   h1.style.display = 'none';
+    /* 用 visibility 而非 display 隐藏店名：h1 继续占位（grid 同格），Dock 叠加其上，顶栏高度与 shop 完全一致 */
+    if(h1)   h1.style.visibility = 'hidden';
     if(window.__storeDock) window.__storeDock.setIndex(currentStoreIndex());
   } else {
     if(dock) dock.hidden = true;
-    if(h1)   h1.style.display = '';
+    if(h1)   h1.style.visibility = '';
     if(window.__storeDock) window.__storeDock.collapse();
   }
 }
