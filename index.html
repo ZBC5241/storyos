@@ -2803,7 +2803,7 @@ function toggleDayCat(cat){
 
 /* 今日明细：点单项展开出库单号（cat=品类内索引） */
 function toggleDayCode(cat, i){
-  const items = (DATA.dayDetails || []).filter(r => (r.cat || '其他') === cat);
+  const items = isLagged() ? [] : (DATA.dayDetails || []).filter(r => (r.cat || '其他') === cat);
   toggleCodeBox('.ddet-det[data-cat="' + esc(cat) + '"][data-i="' + i + '"]', items[i]);
 }
 
@@ -3238,6 +3238,7 @@ function renderQudao(){
 
 /* 今日明细：点击展开某指标/品类的当天逐单明细（供今日品类行下钻调用） */
 function dayMetricItems(k){
+  if (isLagged()) return [];   /* 今日锚定：数据滞后时今日明细为空 */
   const dd = DATA.dayDetails || [];
   const CATS = { '手机':['手机'],'PC':['PC'],'平板':['平板'],'穿戴':['穿戴'],'音频':['音频'],
                  'HD':['HD'],'智慧办公':['PC','平板'],'音频穿戴':['穿戴','音频'],'增值':['增值'] };
@@ -3459,14 +3460,21 @@ function dayHTML(done, gap){
   return h;
 }
 
+/* 今日锚定（晨哥 2026-09-24 拍板）：数据日滞后（今天还没上账）时，「今日」板块显示今天 0，
+   不回显昨日数据；月度板块（performance 累计口径）不受影响 */
+function isLagged(){
+  const m = DATA.meta || {};
+  return m.isToday === false && (m.lagDays || 0) >= 1;
+}
+
 /* 上账时效提示：卖了不等于已上账，但当天一定补齐 */
 function postingBanner(){
   const m = DATA.meta || {};
   const t = m.fetchTime ? ('，' + esc(m.fetchTime) + ' 更新') : '';
   if(m.isToday === false && m.lagDays >= 1){
     return '<div class="lag-tip warn">'
-      + '<b>今天（' + esc(m.todayLabel || '') + '）还没有上账记录</b>'
-      + '<span>下面是 ' + esc(m.date || '') + ' 的数据' + t + '。已卖出但未上账的单不会显示，上完账刷新就有。</span>'
+      + '<b>今天（' + esc(m.todayLabel || '') + '）还没有上账记录，今日板块显示 0</b>'
+      + '<span>已卖出但未上账的单不会显示，上完账后每 15 分钟自动刷新出现。</span>'
       + '</div>';
   }
   return '<div class="lag-tip">'
@@ -3480,7 +3488,7 @@ function dayChartsHTML(dd, meta){
   /* 当日增值明细：优先从 dayDetails 取 cat=='增值'，回退到全月增值明细按当日日期过滤 */
   const dayDate = (meta.date || '').slice(0,10);
   let zzDay = (dd || []).filter(r => r.cat === '增值');
-  if(!zzDay.length){
+  if(!zzDay.length && !isLagged()){   /* 今日锚定：滞后时不回退捞昨日明细 */
     const zzAll = (DATA.details && DATA.details['增值']) || [];
     zzDay = zzAll.filter(r => (r.date || '').slice(0,10) === dayDate);
   }
@@ -3541,14 +3549,14 @@ function renderDay(){
   let h = '<div class="wrap">';
   h += postingBanner();
 
-  /* 今日图表 → 今日品类 → 每日任务：三段平铺，去掉冗余的"全店今日达成"大标题 */
-  const dd = DATA.dayDetails || [];
+  /* 今日锚定：数据滞后（今天没上账）时今日板块显示今天 0，不回显昨日 */
+  const dd = isLagged() ? [] : (DATA.dayDetails || []);
 
   /* 今日图表：品类毛利占比(Donut) + 全员增值排行(Bar)，独立成节 */
   h += dayChartsHTML(dd, DATA.meta);
 
   /* 今日品类：统一排序（毛利/手机/增值置顶，其余按毛利降序），大数字=毛利合计 */
-  const dayDone = DATA.store.dailyDone || {};
+  const dayDone = isLagged() ? {} : (DATA.store.dailyDone || {});
   const MONEY_CATS = ['毛利','手机','PC','平板','穿戴','音频','HD','智慧办公','音频穿戴','增值'];
   const SPECIALS = [['回收','单'],['贴膜','单'],['合约','分'],['滞销','台'],['摄影课','课']];
   const PRIORITY = ['毛利','手机','增值'];
@@ -3603,7 +3611,7 @@ function renderDay(){
 
   /* 每日任务：横排网格，点开看当天逐单明细 */
   h += '<div class="strip-lab" style="margin-top:12px">每日任务 · 点开看当天逐单</div>';
-  h += dayHTML(DATA.store.dailyDone, DATA.store.dailyGap);
+  h += dayHTML(dayDone, DATA.store.dailyGap);
   h += '<div class="day-det"></div>';
   h += '</div>';
 
@@ -3613,7 +3621,7 @@ function renderDay(){
   const DAY_SHOW = ['销额','毛利','手机','PC','平板','穿戴','音频','音频穿戴','智慧办公','HD','增值','会员','回收','贴膜','合约','滞销','优享/会员','摄影课','尊享/储值'];
   DATA.meta.employees.forEach(n => {
     const p = DATA.people[n]; if(!p) return;
-    const d = p.dailyDone || {};
+    const d = isLagged() ? {} : (p.dailyDone || {});
     const items = DAY_SHOW.filter(k => k in d).map(k => [k, MONEY_KEYS.has(k) ? moneyShort(d[k]) : cnt(d[k])]);
     const allZero = items.every(([k]) => !isNum(d[k]) || d[k] === 0);
     h += '<div class="card" style="padding:11px 12px;margin-bottom:8px'
