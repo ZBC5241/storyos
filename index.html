@@ -3573,7 +3573,7 @@ function dayChartsHTML(dd, meta){
     zzDay = zzAll.filter(r => (r.date || '').slice(0,10) === dayDate);
   }
 
-  /* Donut 数据：当日增值按商品名称聚合毛利，降序，取前 5 + 其他（含负数项，与每日任务口径一致） */
+  /* Donut 数据：当日增值按商品名称聚合毛利，降序，取前 5 + 其他（含负数项，与每日任务口径一致）。2026-09-22 晨哥拍板回退按产品明细显示 */
   const pfByName = {};
   let totalPfAll = 0;
   zzDay.forEach(r => {
@@ -3610,11 +3610,9 @@ function dayChartsHTML(dd, meta){
         +     '</div>'
         +     '<div class="donut-legend">';
   donutItems.forEach(it => {
-    const pct = totalPf ? (it.value / totalPf * 100) : 0;
     h += '<div class="dl-i"><span class="dl-swatch" style="background:' + it.color + '"></span>'
        +   '<span class="dl-t">' + esc(it.label) + '</span>'
        +   '<span class="dl-v num">' + moneyShort(it.value) + '</span>'
-       +   '<span class="dl-p num">' + pct.toFixed(0) + '%</span>'
        + '</div>';
   });
   h +=   '</div></div>'
