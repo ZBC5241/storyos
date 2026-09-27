@@ -5361,44 +5361,21 @@ window.addEventListener('hashchange', function(){
 
 
 /* ==========================================================
-   数据加载：优先读线上 data.json，失败则用内嵌快照
+   数据加载：双店内嵌数据(EMBEDDED_DATA_LJC/HYC)即已发布最新权威数据，
+   运行时不远程拉取（避免 CDN 时间戳乱跳 + 单店远程覆盖双店内嵌）
    ========================================================== */
 function loadRemote(silent){
-  // storyos 仓库本身没有 data.json（线上返回 404），若用相对路径拉取会永远失败，
-  // 导致 DATA 始终停留内嵌本地快照、刷新后闪一下又退回本地。
-  // CFG.repo 本就指向 ZBC5241/shop，这里复用 shop 仓库的线上 data.json 作为数据源，对齐 shop 的刷新行为。
-  const ghParts = (CFG.repo || '').split('/');
-  const remoteUrl = ghParts.length === 2
-    ? 'https://' + ghParts[0] + '.github.io/' + ghParts[1] + '/' + CFG.dataFile
-    : CFG.dataFile;
-  const url = remoteUrl + '?t=' + Date.now();
-  const oldData = DATA;
-  const oldSig = iaDataSignature(oldData);
-  const keepY = (silent && VIEW==='insight') ? window.scrollY : 0;
-  if(VIEW==='insight') document.body.classList.add('ai-live-refreshing');
-  return fetch(url, {cache:'no-store'})
-    .then(r => r.ok ? r.json() : Promise.reject(r.status))
-    .then(j => {
-      if(j && j.meta && j.store && j.people){
-        if(DATA === EMBEDDED_DATA_HYC){ render(); return true; }  // 华阳城店保留内嵌 HYC，不被李家村数据覆盖
-        DATA = j;
-        IA_LAST_REMOTE_AT = Date.now();
-        const newSig = iaDataSignature(j);
-        if(oldSig && newSig && oldSig!==newSig) iaRecordSystemEvent(iaDescribeDataChange(oldData,j));
-        render();
-        if(keepY) setTimeout(()=>window.scrollTo(0,keepY),0);
-        $('#liveTag').textContent = '数据已更新';
-        if(!silent) toast(oldSig!==newSig?'发现新经营数据，洞察已重算':'数据已是最新');
-        return true;
-      }
-      throw new Error('格式不对');
-    })
-    .catch(() => {
-      $('#liveTag').textContent = '本地快照';
-      if(!silent) toast('拉取失败，显示本地快照');
-      return false;
-    })
-    .finally(()=>document.body.classList.remove('ai-live-refreshing'));
+  // storyos 是双店仪表盘：李家村/华阳城数据由「更新看板」流程注入内嵌
+  // (EMBEDDED_DATA_LJC / EMBEDDED_DATA_HYC)，即已发布的最新权威数据，刷新页面即生效。
+  // 运行时不远程拉取 shop 单店 data.json——否则会在双店内嵌之上叠加单店远程数据，
+  // 且 GitHub CDN 边缘节点对随机 ?t= 查询缓存不一致，会导致「更新时间」时间戳乱跳、
+  // 华阳城被旧版远程数据锁死、liveTag 在「已更新/本地快照」间反复跳。
+  DATA = (DATA === EMBEDDED_DATA_HYC) ? EMBEDDED_DATA_HYC : EMBEDDED_DATA_LJC;
+  $('#liveTag').textContent = '数据已更新';
+  // silent(自动刷新/视图切换) 不重绘，避免内嵌数据未变却每 15 分钟整页重渲染闪动；
+  // 仅用户手动「刷新经营数据」时重绘一次。
+  if(!silent){ render(); toast('已载入最新看板数据'); }
+  return true;
 }
 
 /* ==========================================================
