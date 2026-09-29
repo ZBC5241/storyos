@@ -181,13 +181,15 @@ def write_page_map(pages, n_pages, total, hyc_raw):
 
 
 def dedup(records):
-    """剔除 _YD 预订单 + 按 (单号, SKU, 序列号) 去重（与李家村管线同口径）。"""
+    """剔除 _YD 预订单 + 整行签名去重。
+    2026-09-30 同步 shop 仓修复：旧窄 key（单号,SKU,序列号）会把同单同SKU同SN
+    但其他字段（入库属性/金额等）不同的合法行误删；翻页重叠产生的完全相同行保留首行。"""
     seen, out = set(), []
     for r in records:
         code = str(r.get("code") or "")
         if code.endswith("_YD"):
             continue
-        k = (code, str(r.get("productsku_cCode") or ""), str(r.get(SN_FIELD) or ""))
+        k = tuple(sorted((str(kk), str(vv)) for kk, vv in r.items()))
         if k in seen:
             continue
         seen.add(k)
