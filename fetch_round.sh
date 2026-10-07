@@ -34,7 +34,10 @@ mkdir -p "$(dirname "$LOG")"
 run_to() {
   local secs=$1; shift
   "$@" & local p=$!
-  ( sleep "$secs" && kill -9 "$p" 2>/dev/null ) & local w=$!
+  # 看门狗 stdout/stderr 必须与主命令隔离：否则主命令退出后，孤儿 sleep 仍握着
+  # 管道写端，下游 tail 等不到 EOF，每轮白等满超时（A2 白等120s + A3 白等400s，
+  # 即每轮11.5分钟时间黑洞的根因，2026-10-07 修复）
+  ( sleep "$secs" && kill -9 "$p" 2>/dev/null ) >/dev/null 2>&1 & local w=$!
   wait "$p"; local rc=$?
   kill "$w" 2>/dev/null; wait "$w" 2>/dev/null
   return $rc
@@ -73,7 +76,7 @@ trap 'rm -rf "$LOCK_DIR" 2>/dev/null' EXIT
 
   echo "▶ A2. 过滤李家村毛利明细"
   run_to 120 "${PY}" "$S/filter_maoli_ljc.py" "$PROFIT_FILE" 2>&1 | tail -4
-  RC_F=$?
+  RC_F=${PIPESTATUS[0]}   # 管道后 $? 是 tail 的，必须取 PIPESTATUS 才是 python 真实退出码
   [ "$RC_F" -ne 0 ] && { echo "❌ 毛利过滤失败 RC=$RC_F，中止本轮"; exit 1; }
   LJC_PROFIT="$DL/ljc/李家村门店毛利明细表-华为终端.xlsx"
   LJC_SA="$DL/销售分析_0924.xlsx"   # 占位参数（--no-sa 不消费，防分页截断数据入渠道口径）
@@ -81,7 +84,7 @@ trap 'rm -rf "$LOCK_DIR" 2>/dev/null' EXIT
   echo "▶ A3. 经理号精准拉李家村销售分析（JSON API，直写渠道缓存）"
   cd "$S"
   run_to 400 "${PY}" fetch_sales_analysis_ljc.py 2>&1 | tail -5
-  RC_S=$?
+  RC_S=${PIPESTATUS[0]}   # 同上：取 python 真实退出码，防拉数失败被静默吞掉
   [ "$RC_S" -ne 0 ] && { echo "❌ 李家村销售分析拉取失败 RC=$RC_S，中止本轮"; exit 1; }
 
   echo "▶ A4. 李家村管线复算（--no-sa --no-xs --no-push）"
