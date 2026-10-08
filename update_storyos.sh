@@ -7,12 +7,10 @@
 #       → inject_data.py 注入 index.html → 有变化才 git push（SSH-443）
 # 特性：零拉数、零浏览器、零用友登录（不与任何链路抢账号/端口，单次约 3-5 秒）
 #
-# 排期（com.storyos.dashboard.update，20档/天）：
-#   白天低频  12:16 / 13:46 / 15:16 / 16:46 / 17:16
-#   傍晚中频  18:16 / 18:46 / 19:16 / 19:46
-#   高峰密集  20:16 / 20:31 / 20:46 / 21:01 / 21:16 / 21:31 / 21:46 / 22:01 / 22:16（20:00-22:30 每约15分钟）
-#   收尾      22:31 / 22:59
-# 数据新鲜度跟随上游：李家村=shop 档位后最新，华阳城=shophyc 档位后最新
+# 排期（com.storyos.dashboard.update，2026-10-03 晨哥要求压滞后，改为高频）：
+#   10:00-23:55 每 5 分钟一档（168 档/天）。无变化自动跳过（注入仅 3-5 秒），
+#   互斥锁防重叠。数据新鲜度跟随上游：李家村=fetch_round A4 产出，华阳城=B 段产出；
+#   数据从"用友拉出"到"上线"的总滞后 ≈ 拉数耗时(9-13min) + 最多 5 分钟推送等待。
 # ============================================================
 set -u
 S="/Users/mac/.local/share/TeleAgent/TeleAgent的工作空间/storyos"
@@ -63,7 +61,7 @@ trap 'rm -rf "$LOCK_DIR" 2>/dev/null' EXIT
   echo "[push] git push origin main（90s 防挂起超时）"
   git push origin main > /tmp/storyos_push.log 2>&1 &
   pushpid=$!
-  ( sleep 90 && kill -9 "$pushpid" 2>/dev/null ) & w=$!
+  ( sleep 90 && kill -9 "$pushpid" 2>/dev/null ) >/dev/null 2>&1 & w=$!
   wait "$pushpid"; PUSH_RC=$?
   kill "$w" 2>/dev/null
   tail -2 /tmp/storyos_push.log
