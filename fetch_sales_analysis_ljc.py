@@ -181,18 +181,28 @@ def write_page_map(pages, n_pages, total, hyc_raw):
 
 
 def dedup(records):
-    """剔除 _YD 预订单 + 整行签名去重。
-    2026-09-30 同步 shop 仓修复：旧窄 key（单号,SKU,序列号）会把同单同SKU同SN
-    但其他字段（入库属性/金额等）不同的合法行误删；翻页重叠产生的完全相同行保留首行。"""
-    seen, out = set(), []
+    """剔除 _YD 预订单 + 业务 key 强去重 + 整行签名去重。
+    2026-10-11 修复：用友 API 会把同一明细行 join 出两份（detailId/SN 相同但返回行 id 不同），
+    整行签名去重对此无效（id 字段不同），导致渠道挂账多算 26017.01（晨哥手动对账实锤）。
+    业务 key = (单据号, 明细行id, skuId, 序列号)：同 key 只保留首行；
+    真多台（同 detailId 不同 SN，如 Mate XT2 两台）正确保留。
+    整行签名去重继续兜底完全相同行与 _YD 预订单。"""
+    seen_biz, seen_row, out = set(), set(), []
     for r in records:
         code = str(r.get("code") or "")
         if code.endswith("_YD"):
             continue
-        k = tuple(sorted((str(kk), str(vv)) for kk, vv in r.items()))
-        if k in seen:
+        kb = (code,
+              str(r.get("retailVouchDetails_product") or ""),
+              str(r.get("retailVouchDetails_productsku") or ""),
+              str(r.get("oid_userDefine_2419863036093267976") or ""))
+        if kb in seen_biz:
             continue
-        seen.add(k)
+        seen_biz.add(kb)
+        k = tuple(sorted((str(kk), str(vv)) for kk, vv in r.items()))
+        if k in seen_row:
+            continue
+        seen_row.add(k)
         out.append(r)
     return out
 
