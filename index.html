@@ -2392,7 +2392,7 @@ function doLogout(){
 
 /* ===== 登录态持久化：手机下拉刷新/重新加载后不再退回登录门；有效期 6 小时，超时或点「退出」即清除 ===== */
 const LOGIN_KEY = 'storyos_login_v1';
-const LOGIN_TTL_MS = 6 * 60 * 60 * 1000;    /* 6 小时：登录后半天内免登录，超过需重新登录 */
+const LOGIN_TTL_MS = 48 * 60 * 60 * 1000;   /* 48 小时：登录后两天内免登录，超过需重新登录（2026-10-19 晨哥定） */
 function loginApply(store){
   MODE = store;                                  // 'ljc' | 'hyc' | 'all'
   if(store === 'all'){
