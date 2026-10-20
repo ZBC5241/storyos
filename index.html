@@ -2214,15 +2214,18 @@ html.authed .login-gate{display:none!important}
 
 </head>
 <script>
-/* 防登录门闪现（FOUC）：body 渲染前同步判定登录态，已登录（6h 内）则首帧即隐藏登录门。
-   与主脚本 LOGIN_KEY/LOGIN_TTL_MS(6h) 口径一致；未登录不加标记，登录门正常显示 */
+/* 防登录门闪现（FOUC）：body 渲染前同步判定登录态，已登录（保活期内）则首帧即隐藏登录门。
+   本处定义 __LOGIN_TTL_MS 为登录保活时长的唯一来源，主脚本 LOGIN_TTL_MS 引用同一值。
+   ⚠️ 改保活时长只改下面这一处即可（2026-10-19 晨哥定 48 小时） */
 (function(){
   try{
+    var __LOGIN_TTL_MS = 48 * 60 * 60 * 1000;   /* 48 小时 */
+    window.__LOGIN_TTL_MS = __LOGIN_TTL_MS;     /* 供主脚本共享，防止两处口径不一致 */
     var raw = localStorage.getItem('storyos_login_v1') || '';
     var i = raw.indexOf('|');
     var store = i > 0 ? raw.slice(0, i) : raw;
     var t = i > 0 ? parseInt(raw.slice(i + 1), 10) : 0;
-    var ok = (store === 'ljc' || store === 'hyc' || store === 'all') && t && isFinite(t) && (Date.now() - t) <= 21600000;
+    var ok = (store === 'ljc' || store === 'hyc' || store === 'all') && t && isFinite(t) && (Date.now() - t) <= __LOGIN_TTL_MS;
     if(ok) document.documentElement.classList.add('authed');
   }catch(e){}
 })();
@@ -2392,7 +2395,7 @@ function doLogout(){
 
 /* ===== 登录态持久化：手机下拉刷新/重新加载后不再退回登录门；有效期 6 小时，超时或点「退出」即清除 ===== */
 const LOGIN_KEY = 'storyos_login_v1';
-const LOGIN_TTL_MS = 48 * 60 * 60 * 1000;   /* 48 小时：登录后两天内免登录，超过需重新登录（2026-10-19 晨哥定） */
+const LOGIN_TTL_MS = (typeof window !== 'undefined' && window.__LOGIN_TTL_MS) || (48 * 60 * 60 * 1000);   /* 48 小时，唯一来源=头部防闪现内联脚本的 __LOGIN_TTL_MS */
 function loginApply(store){
   MODE = store;                                  // 'ljc' | 'hyc' | 'all'
   if(store === 'all'){
