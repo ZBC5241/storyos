@@ -2242,6 +2242,11 @@ html.ios-glass-off *,html.ios-glass-off *::before,html.ios-glass-off *::after{
 html.ios-glass-off body:not([data-board="ops"]) .top{background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(247,248,252,.95))!important}
 html.ios-glass-off .tabs{background:linear-gradient(180deg,rgba(255,255,255,.93),rgba(255,255,255,.88))!important;border:1px solid rgba(255,255,255,.92)!important}
 html.ios-glass-off .action-mask,html.ios-glass-off .mask{background:rgba(24,23,42,.62)!important}
+/* AI 界面（ops）的玻璃规则带 body[data-board] 两级权重，需同级权重反杀（上文通配符不够） */
+html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::before,html.ios-glass-off body[data-board] *::after{
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
 
 </style>
 
