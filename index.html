@@ -4508,7 +4508,7 @@ function currentInsightPlan(){
   return buildInsightActionPlan({m,T,DX,activePeople,topSeller:null,returnDeal:(DX.deals||[]).find(d=>d.isReturn),bestBundleDeal:null,bundleOrder:null,cPhone:di('手机','手机','台'),cProfit:di('毛利','毛利','元'),cValue:di('增值','增值','元')});
 }
 function findInsightTask(id){ return currentInsightPlan().find(t=>t.id===id); }
-function refreshInsightKeepPosition(){ const y=window.scrollY; render(); setTimeout(()=>window.scrollTo(0,y),0); }
+function refreshInsightKeepPosition(){ render(true); }  /* 【18号 2026-10-21】保持滚动位刷新，去掉 render 回顶再恢复的中间跳变（华为机可见） */
 
 function openInsightAction(id){
   const task=findInsightTask(id); if(!task) return;
@@ -5237,8 +5237,9 @@ function wpSwitch(idx){
 }
 
 /* ---------------- 主渲染 ---------------- */
-function render(){
+function render(keepScroll){
   /* 视图必须属于当前板块的 tab 集合（#ops 直达等场景下自动归位） */
+  /* 【18号 2026-10-21】keepScroll：数据刷新不拽回顶部（晨哥华为机上报：刷新后hero卡贴顶不归位） */
   if(!BOARDS[BOARD].tabs.includes(VIEW)) VIEW = BOARDS[BOARD].tabs[0];
   const m = DATA.meta || {};
   $('#storeName').textContent = m.storeName || '门店看板';
@@ -5273,7 +5274,7 @@ function render(){
   $('#app').innerHTML = fn();
   animateHeroRings();
   bindDynamic();
-  window.scrollTo(0,0);
+  if(!keepScroll) window.scrollTo(0,0);
 }
 
 function bindDynamic(){
@@ -5413,7 +5414,7 @@ function loadRemote(silent){
   $('#liveTag').textContent = '数据已更新';
   // silent(自动刷新/视图切换) 不重绘，避免内嵌数据未变却每 15 分钟整页重渲染闪动；
   // 仅用户手动「刷新经营数据」时重绘一次。
-  if(!silent){ render(); toast('已载入最新看板数据'); }
+  if(!silent){ render(true); toast('已载入最新看板数据'); }  /* 【18号 2026-10-21】刷新保持滚动位，不拽回顶 */
   return true;
 }
 
