@@ -40,7 +40,7 @@ def replace_constant(html, name, new_txt):
     while html[j] in ' \t':
         j += 1
     if html[j] == 'n':                       # 已剥离态：null
-        end = html.find(';', j)
+        end = html.find(';', j) - j           # 相对偏移（与 raw_decode 分支保持一致，否则 html[j+end:] 会把后续大段切掉）
         old_txt = 'null'
     else:
         old, end = dec.raw_decode(html[j:])
