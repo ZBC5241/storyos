@@ -2177,6 +2177,16 @@ html.authed .login-gate{display:none!important}
 .top .v111-logout{position:absolute;right:16px;top:81px;margin-left:0}
 /* 退出按钮绝对定位挂在头部右上：进度环下方、「剩 N 天」上方的空档（相对 sticky 头部定位，随头部固定，卡片尺寸不变） */
 .v111-logout:hover{opacity:1;color:#b42318;border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.06)}
+/* =====【18号 2026-10-23】忘记密码/自助改密入口（登录按钮下方，市面常见「忘记密码」同款样式） ===== */
+.v111-aux{display:flex;justify-content:center;margin-top:6px}
+.v111-forgot{appearance:none;background:none;border:none;cursor:pointer;font:inherit;
+  font-size:13.5px;font-weight:500;color:#0a84ff;padding:8px 6px;letter-spacing:.2px}
+.v111-forgot:active{opacity:.55}
+.v111-pane{display:none;width:100%}
+.v111-pane.on{display:block;animation:v111paneIn .28s cubic-bezier(.32,.72,.35,1)}
+@keyframes v111paneIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.v111-ok{min-height:22px;margin-top:14px;text-align:center;color:#1d8a4e;font-size:13px;font-weight:600}
+.v111-ok::before{content:"✓ ";font-weight:700}
 @media(prefers-color-scheme:dark){
   .login-gate{background:linear-gradient(180deg,#151517 0%,#09090b 56%,#000 100%);}
   .v111-login-card{background-color:rgba(36,36,39,.90);
@@ -2239,7 +2249,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261021_3';
+    var V = 'sb_20261023_1';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -2273,14 +2283,40 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
 <!-- ===== 登录门（逐字克隆 kucun 仓库 v111 登录页） ===== -->
 <div class="login-gate" id="loginGate">
   <section class="v111-login" aria-label="登录">
-    <form class="v111-login-card" id="v111LoginForm" autocomplete="on" onsubmit="return doLogin(event)">
-      <div class="v111-login-mark">看板</div>
-      <h1>门店业绩看板</h1>
-      <label class="v111-field"><span>账号</span><input id="v111User" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
-      <label class="v111-field"><span>密码</span><input id="v111Pass" name="password" type="password" autocomplete="current-password" required></label>
-      <button class="v111-submit" type="submit">登录</button>
-      <div class="v111-login-error" id="v111LoginError" role="alert"></div>
-    </form>
+
+    <!-- 面板一：登录（原表单原样保留，套入 pane 容器以便与改密面板切换） -->
+    <div class="v111-pane on" id="paneLogin">
+      <form class="v111-login-card" id="v111LoginForm" autocomplete="on" onsubmit="return doLogin(event)">
+        <div class="v111-login-mark">看板</div>
+        <h1>门店业绩看板</h1>
+        <label class="v111-field"><span>账号</span><input id="v111User" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+        <label class="v111-field"><span>密码</span><input id="v111Pass" name="password" type="password" autocomplete="current-password" required></label>
+        <button class="v111-submit" type="submit">登录</button>
+        <div class="v111-login-error" id="v111LoginError" role="alert"></div>
+        <div class="v111-aux">
+          <button type="button" class="v111-forgot" onclick="sbShowPane('paneChange')">忘记密码</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- 面板二：忘记密码（自助改密：凭 账号+当前密码 核验后改本人密码，服务端 /api/change-password）【18号 2026-10-23】 -->
+    <div class="v111-pane" id="paneChange">
+      <form class="v111-login-card" onsubmit="return doChangePassword(event)">
+        <div class="v111-login-mark">改密</div>
+        <h1>修改密码</h1>
+        <label class="v111-field"><span>账号</span><input id="chgUser" autocapitalize="none" spellcheck="false" required placeholder="如：邵乐乐"></label>
+        <label class="v111-field"><span>当前密码</span><input id="chgOld" type="password" required placeholder="输入现在使用的密码"></label>
+        <label class="v111-field"><span>新密码</span><input id="chgNew" type="password" required placeholder="设置新密码"></label>
+        <label class="v111-field"><span>再输一遍新密码</span><input id="chgNew2" type="password" required placeholder="两次输入需一致"></label>
+        <button class="v111-submit" type="submit">确认修改</button>
+        <div class="v111-login-error" id="chgError" role="alert"></div>
+        <div class="v111-ok" id="chgOk" style="display:none">密码已修改，请用新密码登录</div>
+        <div class="v111-aux">
+          <button type="button" class="v111-forgot" onclick="sbBackToLogin()">返回登录</button>
+        </div>
+      </form>
+    </div>
+
   </section>
 </div>
 
@@ -2428,6 +2464,51 @@ function doLogin(ev){
   }).catch(() => { err.textContent = '数据服务连接失败，请检查网络后重试'; });
   return false;
 }
+/* ===== 忘记密码/自助改密（2026-10-23 上线，18号）：凭 账号+当前密码 重置本人密码 ===== */
+function sbShowPane(id){
+  document.getElementById('paneLogin').classList.toggle('on', id === 'paneLogin');
+  document.getElementById('paneChange').classList.toggle('on', id === 'paneChange');
+}
+function sbBackToLogin(){
+  document.getElementById('chgOld').value = '';
+  document.getElementById('chgNew').value = '';
+  document.getElementById('chgNew2').value = '';
+  document.getElementById('chgError').textContent = '';
+  document.getElementById('chgOk').style.display = 'none';
+  sbShowPane('paneLogin');
+  const u = document.getElementById('v111User');
+  if(!u.value) u.value = document.getElementById('chgUser').value;
+  document.getElementById('v111Pass').focus();
+}
+function doChangePassword(ev){
+  ev.preventDefault();
+  const u   = (document.getElementById('chgUser').value || '').trim().replace(/\s+/g, '');
+  const o   = document.getElementById('chgOld').value || '';
+  const n1  = document.getElementById('chgNew').value || '';
+  const n2  = document.getElementById('chgNew2').value || '';
+  const err = document.getElementById('chgError');
+  const ok  = document.getElementById('chgOk');
+  ok.style.display = 'none'; err.textContent = '';
+  if(!u || !o){ err.textContent = '请输入账号和当前密码'; return false; }
+  if(!n1){ err.textContent = '请输入新密码'; return false; }
+  if(n1 !== n2){ err.textContent = '两次输入的新密码不一致'; document.getElementById('chgNew2').value = ''; return false; }
+  err.textContent = '正在提交…';
+  fetch(API_BASE + '/api/change-password', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({account: u, currentPassword: o, newPassword: n1})
+  }).then(async r => {
+    const j = await r.json().catch(() => ({}));
+    if(r.status === 429){ err.textContent = j.error || '尝试过于频繁，请 1 分钟后再试'; return; }
+    if(!r.ok){ err.textContent = j.error || '修改失败，请核对账号和当前密码'; return; }
+    err.textContent = '';
+    ok.style.display = '';
+    document.getElementById('chgNew').value = ''; document.getElementById('chgNew2').value = '';
+    document.getElementById('v111User').value = u;
+    setTimeout(sbBackToLogin, 1600);
+  }).catch(() => { err.textContent = '数据服务连接失败，请稍后重试'; });
+  return false;
+}
+
 function doLogout(){
   loginClear();                               // 清除记住的登录态，退出即需重新登录
   try{ localStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(CACHE_KEY); }catch(e){}

@@ -5,6 +5,7 @@
 #
 # 端点：
 #   POST /api/login   {account, password} → {token, store, expiresIn}   （限流 5 次/分/IP）
+#   POST /api/change-password {account, currentPassword, newPassword} → {ok}（限流同 login；凭账号+当前密码自助改密）
 #   GET  /api/data?token=...               → {store, data}              （按 token 的 store 授权）
 #   GET  /api/health                       → {ok, age}                  （供保活探活）
 #
@@ -31,6 +32,33 @@ CFG = load_config()
 SECRET = CFG['token_secret'].encode('utf-8')
 TTL_SECONDS = int(CFG.get('ttl_hours', 48)) * 3600
 PORT = int(CFG.get('port', 8798))
+
+# ---------- 账号独立密码（2026-10-23 自助改密）----------
+# CFG 常驻内存：改密直接改内存 CFG（登录立即生效）+ 原子落盘（重启不丢），无需重启服务。
+_cfg_lock = threading.Lock()
+
+def resolve_account(account):
+    """账号名归一：先直查，B 后缀容错（漏输/多输 B），返回规范账号名或 None"""
+    if account in CFG['accounts']:
+        return account
+    if account.endswith('B'):
+        alt = account[:-1]
+        if alt in CFG['accounts']:
+            return alt
+    return None
+
+def effective_password(account):
+    """每人独立密码优先，缺失回退全局 password"""
+    ap = CFG.get('accountPasswords') or {}
+    return str(ap.get(account) or CFG.get('password', ''))
+
+def save_config():
+    with _cfg_lock:
+        tmp = CONFIG_PATH + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(CFG, f, ensure_ascii=False, indent=2)
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, CONFIG_PATH)
 
 # ---------- 日志 ----------
 _log_lock = threading.Lock()
@@ -190,13 +218,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
-        if path != '/api/login':
+        if path not in ('/api/login', '/api/change-password'):
             self._json(404, {'error': 'not found'})
             return
         ip = self.client_address[0]
         if rate_limited(ip):
             self._json(429, {'error': '尝试过于频繁，请 1 分钟后再试'})
-            log('/api/login 429 限流 ip=%s' % ip)
+            log('%s 429 限流 ip=%s' % (path, ip))
             return
         try:
             n = int(self.headers.get('Content-Length', '0'))
@@ -204,18 +232,46 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             self._json(400, {'error': 'bad request'})
             return
+        if path == '/api/change-password':
+            self._do_change_password(body, ip)
+            return
         account = str(body.get('account', '')).strip().replace(' ', '').replace('\t', '')
         password = str(body.get('password', ''))
         store = CFG['accounts'].get(account)
         if not store and account.endswith('B'):           # 容错：漏输 B 后缀（与原前端一致）
             store = CFG['accounts'].get(account[:-1])
-        if not store or not hmac.compare_digest(password.encode(), CFG['password'].encode()):
+        if not store or not hmac.compare_digest(password.encode(), effective_password(resolve_account(account) or account).encode()):
             self._json(401, {'error': '账号或密码错误，请重新输入'})
             log('/api/login 401 失败 account=%s ip=%s' % (account or '(空)', ip))
             return
         token = issue_token(store)
         log('/api/login 200 成功 account=%s store=%s ip=%s' % (account, store, ip))
         self._json(200, {'token': token, 'store': store, 'expiresIn': TTL_SECONDS})
+
+    def _do_change_password(self, body, ip):
+        """自助改密：凭 账号+当前密码 核验后改本人密码（每人独立，互不影响）"""
+        account = str(body.get('account', '')).strip().replace(' ', '').replace('\t', '')
+        cur = str(body.get('currentPassword', ''))
+        new = str(body.get('newPassword', ''))
+        acct = resolve_account(account)
+        if not acct:
+            self._json(401, {'error': '账号不存在，请核对姓名（华阳城部分账号带 B 后缀）'})
+            log('/api/change-password 401 账号不存在 account=%s ip=%s' % (account or '(空)', ip))
+            return
+        if not hmac.compare_digest(cur.encode(), effective_password(acct).encode()):
+            self._json(401, {'error': '当前密码不正确'})
+            log('/api/change-password 401 当前密码错误 account=%s ip=%s' % (acct, ip))
+            return
+        if not new or len(new) > 64:
+            self._json(400, {'error': '新密码需为 1-64 位'})
+            return
+        if hmac.compare_digest(new.encode(), cur.encode()):
+            self._json(400, {'error': '新密码不能与当前密码相同'})
+            return
+        CFG.setdefault('accountPasswords', {})[acct] = new
+        save_config()
+        log('/api/change-password 200 成功 account=%s ip=%s' % (acct, ip))
+        self._json(200, {'ok': True})
 
 def main():
     os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
