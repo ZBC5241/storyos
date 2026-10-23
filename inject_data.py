@@ -74,6 +74,17 @@ def main():
             f.write(new_txt)
         # 剥离：Pages 页面里的数据常量置 null（前端改从售票厅拉取，见 index.html 登录/拉数逻辑）
         html, _ = replace_constant(html, name, 'null')
+    # 【18号 2026-10-23 加固】写前自检：锚点必须在 + 售票厅数据必须新鲜，任一不满足即非零退出（防静默停更）
+    for name in ('EMBEDDED_DATA_LJC', 'EMBEDDED_DATA_HYC'):
+        if f'const {name} = ' not in html:
+            print(f"  ❌ 自检失败：{name} 锚点丢失（疑似切片事故），拒绝写入 index.html")
+            sys.exit(2)
+    for store in ('ljc', 'hyc'):
+        p = os.path.join(SERVER_DATA, store + '.json')
+        age = time.time() - os.path.getmtime(p) if os.path.exists(p) else 9e9
+        if age > 1800:
+            print(f"  ❌ 自检失败：server/data/{store}.json 已 {int(age)//60} 分钟未刷新（源数据读取失败或写入被跳过）")
+            sys.exit(2)
     if not changed:
         # 数据没变时仍要确保剥离态 + 售票厅文件在位（首次改造 / 中途回滚过）
         stripped = ('const EMBEDDED_DATA_LJC = null;' in html

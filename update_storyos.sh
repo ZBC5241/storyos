@@ -51,6 +51,20 @@ trap 'rm -rf "$LOCK_DIR" 2>/dev/null' EXIT
     exit "$RC"
   fi
 
+  echo "▶ 1.5 数据新鲜度看门狗（>30min 未更新即非零退出触发告警）【18号 2026-10-23】"
+  for f in "$S/server/data/ljc.json" "$S/server/data/hyc.json"; do
+    if [ ! -f "$f" ]; then
+      echo "❌ 缺少 $f"
+      exit 3
+    fi
+    AGE=$(( $(date +%s) - $(stat -f%m "$f") ))
+    if [ "$AGE" -gt 1800 ]; then
+      echo "❌ $f 已 $((AGE/60)) 分钟未更新"
+      exit 3
+    fi
+  done
+  echo "✅ 双店售票厅数据新鲜"
+
   echo "▶ 2. 检查变化并推送"
   if git diff --quiet index.html; then
     echo "⏭ index.html 无变化，跳过 push"
@@ -70,6 +84,16 @@ trap 'rm -rf "$LOCK_DIR" 2>/dev/null' EXIT
 } >> "$LOG" 2>&1
 RC=$?
 if [ "$RC" -ne 0 ]; then
-  /usr/bin/python3 "$NOTIFY" --stage "storyos看板" --exit-code "$RC" --log "$LOG" --tail 10 >> "$LOG" 2>&1
+  # 【18号 2026-10-23】告警去重：30 分钟内只外发一次，防每5分钟一轮的告警风暴
+  ALERT_STAMP=/tmp/storyos_alert.last
+  NOW=$(date +%s); LAST=0
+  [ -f "$ALERT_STAMP" ] && LAST=$(stat -f%m "$ALERT_STAMP" 2>/dev/null || echo 0)
+  if [ $((NOW - LAST)) -gt 1800 ]; then
+    /usr/bin/python3 "$NOTIFY" --stage "storyos看板" --exit-code "$RC" --log "$LOG" --tail 10 >> "$LOG" 2>&1
+    touch "$ALERT_STAMP"
+    echo "[告警] 已外发（RC=$RC）" >> "$LOG"
+  else
+    echo "[告警] 30分钟内已告警过，本次只记日志（RC=$RC）" >> "$LOG"
+  fi
 fi
 exit "$RC"
