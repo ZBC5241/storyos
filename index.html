@@ -2289,7 +2289,8 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
     var store = i > 0 ? raw.slice(0, i) : raw;
     var t = i > 0 ? parseInt(raw.slice(i + 1), 10) : 0;
     var ok = (store === 'ljc' || store === 'hyc' || store === 'all') && t && isFinite(t) && (Date.now() - t) <= __LOGIN_TTL_MS;
-    if(ok) document.documentElement.classList.add('authed');
+    var tok = localStorage.getItem('storyos_token_v1') || '';   /* B 方案：真票在 token，本地时间戳只管首帧 */
+    if(ok && tok) document.documentElement.classList.add('authed');
   }catch(e){}
 })();
 </script>
