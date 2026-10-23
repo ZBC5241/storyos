@@ -1,0 +1,16 @@
+# storyos 售票厅（B 方案）——敏感文件一律不进 git
+# 口令、签名密钥、经营数据、访问日志只留在本机
+server/config.json
+server/data/
+server/logs/
+server/current_public_url.txt
+server/__pycache__/
+__pycache__/
+*.pyc
+
+# 管线中间产物与历史备份（体积大/含原始经营数据，只留本机）
+logs/
+sa_ljc_month.json
+sa_ljc_raw.tsv
+sa_ljc_warehouse.json
+index.html.bak*
