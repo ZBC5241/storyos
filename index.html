@@ -2249,7 +2249,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261023_2';
+    var V = 'sb_20261023_3';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -3569,7 +3569,7 @@ function clickDayMetric(k){
 }
 
 /* ---------------- 视图 2：排行 ---------------- */
-const RANK_DIMS = [
+const RANK_DIMS = [  /*【18号 2026-10-23】13 品类排行：底表任务块 11 项 + 智慧办公/音频穿戴 2 个合并口径（原 7 个缺 PC/平板/音频/HD/智慧办公/考核机型） */
   {k:'毛利',   src:'performance'},
   {k:'销额',   src:'performance', label:'销售额'},
   {k:'手机',   src:'performance'},
@@ -3577,6 +3577,12 @@ const RANK_DIMS = [
   {k:'穿戴',   src:'performance'},
   {k:'增值',   src:'qcs'},
   {k:'合约', src:'qcs'},
+  {k:'PC',   src:'performance', label:'电脑'},
+  {k:'平板',   src:'performance'},
+  {k:'音频',   src:'performance'},
+  {k:'HD',   src:'performance', label:'智慧屏'},
+  {k:'智慧办公', src:'performance'},
+  {k:'考核机型', src:'qcs'},
 ];
 
 function renderRank(){
@@ -3584,8 +3590,11 @@ function renderRank(){
   const list = DATA.meta.employees.map(n => {
     const p = DATA.people[n] || {};
     const k = ((p[dim.src] || {})[dim.k]) || null;
+    /* 考核机型等数据只有 task/done 无 rate 时现算达成率 */
+    const rate = (k && isNum(k.rate)) ? k.rate
+               : ((k && isNum(k.task) && k.task > 0 && isNum(k.done)) ? k.done / k.task : null);
     return { name:n, k:k, done: (k && isNum(k.done)) ? k.done : -Infinity,
-             rate:(k && isNum(k.rate)) ? k.rate : null, has: hasTask(k) };
+             rate:rate, has: hasTask(k) };
   });
   // 排序：有任务的按达成率，没任务的按完成量垫底
   list.sort((a,b) => {
