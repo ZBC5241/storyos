@@ -2249,7 +2249,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261023_1';
+    var V = 'sb_20261023_2';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -2304,7 +2304,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
       <form class="v111-login-card" onsubmit="return doChangePassword(event)">
         <div class="v111-login-mark">改密</div>
         <h1>修改密码</h1>
-        <label class="v111-field"><span>账号</span><input id="chgUser" autocapitalize="none" spellcheck="false" required placeholder="如：邵乐乐"></label>
+        <label class="v111-field"><span>账号</span><input id="chgUser" autocapitalize="none" spellcheck="false" required placeholder="输入你的登录账号"></label>
         <label class="v111-field"><span>当前密码</span><input id="chgOld" type="password" required placeholder="输入现在使用的密码"></label>
         <label class="v111-field"><span>新密码</span><input id="chgNew" type="password" required placeholder="设置新密码"></label>
         <label class="v111-field"><span>再输一遍新密码</span><input id="chgNew2" type="password" required placeholder="两次输入需一致"></label>
