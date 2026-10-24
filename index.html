@@ -2147,6 +2147,7 @@ body[data-board="ops"] :is(.ai-action-target,.ai-action-standard,.ai-action-resu
 html.authed .login-gate{display:none!important}
 .v111-login{width:100%;display:flex;align-items:center;justify-content:center}
 .v111-login-card{width:min(100%,400px);padding:34px 28px 24px;
+  margin-left:auto;margin-right:auto; /* 【18号 2026-10-24】表单包进 pane(block) 后 flex 居中失效，块级流内自居中（电脑宽屏回归修复） */
   background-color:rgba(248,248,250,.78);
   background-image:linear-gradient(145deg,rgba(255,255,255,.94),rgba(247,247,249,.76) 54%,rgba(242,242,247,.72));
   border:1px solid rgba(255,255,255,.96);border-radius:34px;
@@ -2249,7 +2250,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261024_2';
+    var V = 'sb_20261024_3';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
