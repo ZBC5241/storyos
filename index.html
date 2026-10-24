@@ -2247,35 +2247,15 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
 </script>
 <script>
 /*【18号 2026-10-21】版本守卫：GitHub Pages max-age=600，华为浏览器下拉刷新会吃缓存旧页导致修复不生效；
-   每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。
-   【18号 2026-10-24】+visibilitychange 复查：标签页长期不重载时 JS 不会重跑、加载时那一次守卫永远不触发，
-   页面会停留在「旧DOM+新数据」的混合态（2026-10-24 晨哥电脑端实测：品类速览空白、缺 PC/智慧办公行）。
-   现在每次从后台切回前台都问服务器要当前版本号（5分钟节流），不一致即强刷。 */
+   每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261024_4';
-    function guard(){
-      if (localStorage.getItem('sb_build_ver') === V) return;
-      if (sessionStorage.getItem('sb_build_reloading') === V) return;
-      sessionStorage.setItem('sb_build_reloading', V);
-      localStorage.setItem('sb_build_ver', V);
-      location.reload(true);
-    }
-    guard();
-    document.addEventListener('visibilitychange', function(){
-      if (document.hidden) return;
-      try{
-        var last = +(sessionStorage.getItem('sb_last_vercheck') || 0);
-        if (Date.now() - last < 5*60*1000) return;   /* 5 分钟内查过就跳过，省流量 */
-        sessionStorage.setItem('sb_last_vercheck', String(Date.now()));
-        fetch(location.href, {cache:'no-store', headers:{'Range':'bytes=0-16383'}})
-          .then(function(r){ return r.text(); })
-          .then(function(txt){
-            var m = txt.match(/var V = '(sb_[0-9_]+)'/);
-            if (m && m[1] !== V) location.reload(true);
-          }).catch(function(){});
-      }catch(e){}
-    });
+    var V = 'sb_20261024_3';
+    if (localStorage.getItem('sb_build_ver') === V) return;
+    if (sessionStorage.getItem('sb_build_reloading') === V) return;
+    sessionStorage.setItem('sb_build_reloading', V);
+    localStorage.setItem('sb_build_ver', V);
+    location.reload(true);
   }catch(e){}
 })();
 </script>
