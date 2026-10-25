@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>门店业绩看板</title>
+<!-- 【18号 2026-10-25】售票厅隧道预连接：省 DNS+TLS 握手，首屏拉数快 200-500ms -->
+<link rel="preconnect" href="https://lijiacun-board.serveousercontent.com">
+<link rel="dns-prefetch" href="https://lijiacun-board.serveousercontent.com">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='19' font-size='19'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E">
 <style>
 :root{
@@ -2143,6 +2146,16 @@ body[data-board="ops"] :is(.ai-action-target,.ai-action-standard,.ai-action-resu
 .login-gate{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;padding:24px;
   background:linear-gradient(180deg,#fafafa 0%,#f2f2f7 52%,#e9e9ee 100%);}
 .login-gate.hide{display:none}
+/*【18号 2026-10-25】白屏根治三件套：骨架屏 / 免动画渲染 / 快照提示 */
+.sb-skel{padding-top:26px}
+.sb-sk{position:relative;overflow:hidden;background:#eef0f5;margin-bottom:14px;border-radius:var(--r)}
+.sb-sk::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);
+  transform:translateX(-100%);animation:sbShimmer 1.4s infinite}
+.sb-sk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.sb-skel-t{text-align:center;font-size:12px;color:var(--tx3);padding:18px 0 6px;letter-spacing:.5px}
+@keyframes sbShimmer{to{transform:translateX(100%)}}
+body.sb-no-anim *{animation:none!important;transition:none!important}
 /* 防登录门闪现（FOUC）：head 同步脚本在渲染前判定登录态，已登录则首帧即隐藏登录门 */
 html.authed .login-gate{display:none!important}
 .v111-login{width:100%;display:flex;align-items:center;justify-content:center}
@@ -2249,7 +2262,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261024_2';
+    var V = 'sb_20261024_3';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -2353,7 +2366,18 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
 </div>
 
 <!-- ===== 视图容器 ===== -->
-<main id="app"></main>
+<main id="app">
+  <!-- 【18号 2026-10-25】首屏骨架：无本机快照时数据未回先出结构，不再是纯白 -->
+  <div class="wrap sb-skel" id="sbSkel">
+    <div class="sb-sk card" style="height:150px"></div>
+    <div class="sb-sk-grid">
+      <div class="sb-sk card" style="height:96px"></div><div class="sb-sk card" style="height:96px"></div>
+      <div class="sb-sk card" style="height:96px"></div><div class="sb-sk card" style="height:96px"></div>
+    </div>
+    <div class="sb-sk card" style="height:280px"></div>
+    <div class="sb-skel-t">正在载入看板数据…</div>
+  </div>
+</main>
 
 <!-- ===== 管理弹层 ===== -->
 <div class="mask" id="adminMask">
@@ -2435,6 +2459,7 @@ const API_BASE = new URLSearchParams(location.search).get('api')
       : 'https://lijiacun-board.serveousercontent.com');
 const TOKEN_KEY = 'storyos_token_v1';
 const CACHE_KEY = 'storyos_payload_cache';
+const SNAP_KEY  = 'storyos_snap_v1';   /* 【18号 2026-10-25】本机快照（按 store 分键，24h）——首屏秒开，隧道慢不再白屏 */
 let MODE = 'ljc';   /* ljc/hyc = 单店隔离；all = 店长合并账号(zbc)可切换两店 */
 
 /* ===== 登录门（B 方案：账号→门店映射与口令校验全部在售票厅服务端） =====
@@ -2530,7 +2555,13 @@ async function fetchData(){
   try{ token = localStorage.getItem(TOKEN_KEY) || ''; }catch(e){}
   if(!token){ showGate('请先登录'); return null; }
   try{
-    const r = await fetch(API_BASE + '/api/data?token=' + encodeURIComponent(token), {cache: 'no-store'});
+    /* 【18号 2026-10-25】5 秒超时：隧道僵住时不干等（浏览器默认超时很长，白屏元凶之一） */
+    const ctrl = new AbortController();
+    const tmr = setTimeout(() => ctrl.abort(), 5000);
+    let r;
+    try{
+      r = await fetch(API_BASE + '/api/data?token=' + encodeURIComponent(token), {cache: 'no-store', signal: ctrl.signal});
+    }finally{ clearTimeout(tmr); }
     if(r.status === 401){                      /* 票过期/无效：清干净回登录门 */
       try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(LOGIN_KEY); }catch(e){}
       showGate('登录已过期，请重新登录');
@@ -2540,6 +2571,8 @@ async function fetchData(){
     const j = await r.json();
     const norm = (j.store === 'all') ? j.data : Object.assign({}, {[j.store]: j.data});
     try{ sessionStorage.setItem(CACHE_KEY, JSON.stringify({ts: Date.now(), payload: norm})); }catch(e){}
+    /* 【18号 2026-10-25】写本机快照（按当前 MODE 分键）：下次打开首屏秒开 */
+    try{ localStorage.setItem(SNAP_KEY + '_' + MODE, JSON.stringify({ts: Date.now(), payload: norm})); }catch(e){}
     hideOfflineBanner();
     return norm;
   }catch(e){
@@ -2588,15 +2621,43 @@ function hideOfflineBanner(){
   const bar = document.getElementById('offlineBar');
   if(bar) bar.remove();
 }
+/* 【18号 2026-10-25】进板统一入口：本机快照首屏秒开 → 后台拉新鲜数据静默替换。
+   隧道慢/断时用户先看到 24h 内快照 + 顶部警示条，不再白屏 2-4 秒、也不会被弹回登录门。 */
 async function loginApply(store){
   MODE = store;                                  // 'ljc' | 'hyc' | 'all'
   setSwitcher(store === 'all');
+  const snap = readSnap(store);
+  if(snap){
+    applyPayloadQuiet(store, snap.payload);      /* 快照首屏：免入场动画，瞬间出数 */
+    document.getElementById('loginGate').classList.add('hide');
+    document.documentElement.classList.add('authed');
+  }
   const payload = await fetchData();
-  if(!payload) return false;                     /* 失败已在 fetchData 里降级处理 */
-  applyPayload(store, payload);
+  if(!payload){
+    if(snap){ showOfflineBanner(snap.ts); return true; }   /* 有快照：挂警示条继续看 */
+    return false;                                        /* 401 已回门 / 无快照的网络失败：fetchData 已提示 */
+  }
+  applyPayloadQuiet(store, payload);             /* 鲜数据替换：同样免动画，不闪 */
   document.getElementById('loginGate').classList.add('hide');
   document.documentElement.classList.add('authed');   /* 同步首帧隐藏标记（防下拉刷新闪登录页） */
   return true;
+}
+/* 本机快照读取（按 store 分键，24h 有效；file:// 等隐私模式失败时静默跳过） */
+function readSnap(store){
+  try{
+    const c = JSON.parse(localStorage.getItem(SNAP_KEY + '_' + store) || 'null');
+    if(c && c.payload && c.ts && Date.now() - c.ts < 24 * 3600 * 1000) return c;
+  }catch(e){}
+  return null;
+}
+/* 快照渲染 + 静默替换：整轮禁用入场动画与过渡，避免二次 render 卡片重播动画闪屏 */
+function applyPayloadQuiet(store, payload){
+  PAYLOAD = payload;
+  CUR_STORE = (store === 'hyc') ? 'hyc' : 'ljc';
+  DATA = payload[CUR_STORE];
+  document.body.classList.add('sb-no-anim');
+  render();
+  requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.remove('sb-no-anim')));
 }
 /* 店长合并账号(zbc)下的门店切换：仅 all 模式生效；入口=点击顶部门店名称。数据来自已拉取的全量载荷，不再发请求 */
 function switchStore(store){
@@ -2709,14 +2770,7 @@ async function loginRestore(){
   let token = '';
   try{ token = localStorage.getItem(TOKEN_KEY) || ''; }catch(e){}
   if(!token){ loginClear(); return false; }                     /* 没有真票：本地时间戳不算数 */
-  const payload = await fetchData();                            /* 401 会自清并弹门；网络失败有缓存降级 */
-  if(!payload) return false;
-  MODE = store;
-  setSwitcher(store === 'all');
-  applyPayload(store, payload);
-  document.getElementById('loginGate').classList.add('hide');
-  document.documentElement.classList.add('authed');
-  return true;
+  return await loginApply(store);   /* 【18号 2026-10-25】统一走快照优先入口（白屏根治） */
 }
 /* 切回页面时再校验一次：会话已过期就退回登录门 */
 document.addEventListener('visibilitychange', function(){
