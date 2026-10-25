@@ -2632,7 +2632,16 @@ async function loginApply(store){
     document.getElementById('loginGate').classList.add('hide');
     document.documentElement.classList.add('authed');
   }
-  const payload = await fetchData();
+  let payload = await fetchData();
+  /* 【18号 2026-10-25】首次且无快照时失败不立刻弹回登录门：1.5s 后自动重试一次，消化隧道偶发抖动 */
+  if(!payload && !snap){
+    let tok = '';
+    try{ tok = localStorage.getItem(TOKEN_KEY) || ''; }catch(e){}
+    if(tok){
+      await new Promise(r => setTimeout(r, 1500));
+      payload = await fetchData();
+    }
+  }
   if(!payload){
     if(snap){ showOfflineBanner(snap.ts); return true; }   /* 有快照：挂警示条继续看 */
     return false;                                        /* 401 已回门 / 无快照的网络失败：fetchData 已提示 */
