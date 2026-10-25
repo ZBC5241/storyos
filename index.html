@@ -2156,6 +2156,33 @@ body[data-board="ops"] :is(.ai-action-target,.ai-action-standard,.ai-action-resu
 .sb-skel-t{text-align:center;font-size:12px;color:var(--tx3);padding:18px 0 6px;letter-spacing:.5px}
 @keyframes sbShimmer{to{transform:translateX(100%)}}
 body.sb-no-anim *{animation:none!important;transition:none!important}
+/*【18号 2026-10-25】离线提示条 · 极致版：玻璃浮条 + 脉冲状态点 + 主副文案 + 重试/关闭，滑入回弹、退场淡出 */
+.sb-ob{position:fixed;top:64px;left:50%;transform:translate(-50%,-16px);z-index:1000;
+  display:flex;align-items:center;gap:11px;width:min(560px,calc(100% - 32px));
+  padding:11px 14px;border-radius:16px;font-family:inherit;
+  background:rgba(255,251,235,.88);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid rgba(251,191,36,.45);
+  box-shadow:0 12px 32px rgba(180,120,20,.18),0 2px 8px rgba(180,120,20,.10),inset 0 1px 0 rgba(255,255,255,.7);
+  opacity:0;transition:opacity .3s ease,transform .38s cubic-bezier(.34,1.4,.5,1)}
+.sb-ob.on{opacity:1;transform:translate(-50%,0)}
+.sb-ob.out{opacity:0;transform:translate(-50%,-14px)}
+.sb-ob-dot{width:9px;height:9px;border-radius:50%;background:#f59e0b;flex:none;
+  box-shadow:0 0 0 3px rgba(245,158,11,.18);animation:sbObPulse 1.8s ease-in-out infinite}
+@keyframes sbObPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.sb-ob-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;line-height:1.35}
+.sb-ob-tx b{font-size:13.5px;font-weight:800;color:#92400e;letter-spacing:-.2px}
+.sb-ob-sub{font-size:11.5px;color:#a16207;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-ob-btn{appearance:none;border:1px solid rgba(180,120,20,.28);background:rgba(255,255,255,.65);
+  color:#92400e;font:inherit;font-size:12px;font-weight:700;padding:6px 13px;border-radius:9px;cursor:pointer;flex:none;transition:.15s}
+.sb-ob-btn:hover{background:#fff}
+.sb-ob-btn:disabled{opacity:.6;cursor:default}
+.sb-ob-btn.shake{animation:sbObShake .4s}
+@keyframes sbObShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.sb-ob-x{appearance:none;border:none;background:none;color:#b45309;font-size:17px;line-height:1;
+  padding:4px 2px 4px 6px;cursor:pointer;flex:none;opacity:.55;transition:.15s}
+.sb-ob-x:hover{opacity:1}
+@media (prefers-reduced-motion:reduce){.sb-ob,.sb-ob-dot{animation:none;transition:none}}
 /* 防登录门闪现（FOUC）：head 同步脚本在渲染前判定登录态，已登录则首帧即隐藏登录门 */
 html.authed .login-gate{display:none!important}
 .v111-login{width:100%;display:flex;align-items:center;justify-content:center}
@@ -2262,7 +2289,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261024_3';
+    var V = 'sb_20261024_4';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -2584,6 +2611,10 @@ async function fetchData(){
         return c.payload;
       }
     }catch(e2){}
+    /* 【18号 2026-10-25】本机有 24h 快照时静默返回 null，不弹登录门——
+       由调用方（loginApply 已渲染快照 / loadRemote 界面照常）按快照降级，
+       堵住「快照兜底了门还被弹出来盖住看板」的回归（实测复现：门+黄条+看板全乱） */
+    if(readSnap(MODE)) return null;
     showGate('数据服务连接失败：' + ((e && e.message) || '网络异常') + '。稍后自动恢复，持续出现请联系店长检查售票厅');
     return null;
   }
@@ -2604,22 +2635,50 @@ function showGate(msg){
   }
 }
 /* 离线降级警示条：售票厅不可达但用缓存数据渲染时挂在顶部 */
+/* 【18号 2026-10-25】离线提示条 · 极致版：玻璃浮条 + 脉冲点 + 主副文案 + 重试/关闭；
+   挂在顶栏下方居中（不挡退出/切换按钮），滑入回弹、退场淡出；手动关闭后 10 分钟不扰民 */
+let sbBannerHideAt = 0;
 function showOfflineBanner(ts){
+  if(Date.now() < sbBannerHideAt) return;                 /* 用户刚手动关过：10 分钟静默 */
   let bar = document.getElementById('offlineBar');
   if(!bar){
     bar = document.createElement('div');
     bar.id = 'offlineBar';
-    bar.setAttribute('style', 'position:fixed;top:0;left:0;right:0;z-index:1000;background:#f59e0b;color:#fff;'
-      + 'font-size:12px;font-weight:700;text-align:center;padding:7px 12px;letter-spacing:.3px;'
-      + 'box-shadow:0 2px 10px rgba(0,0,0,.18)');
+    bar.className = 'sb-ob';
+    bar.setAttribute('role', 'status');
+    bar.innerHTML = '<span class="sb-ob-dot"></span>'
+      + '<div class="sb-ob-tx"><b>数据非最新</b><span class="sb-ob-sub"></span></div>'
+      + '<button type="button" class="sb-ob-btn">重试</button>'
+      + '<button type="button" class="sb-ob-x" aria-label="关闭提示">×</button>';
     document.body.appendChild(bar);
+    bar.querySelector('.sb-ob-btn').onclick = function(){ sbObRetry(bar); };
+    bar.querySelector('.sb-ob-x').onclick = function(){
+      sbBannerHideAt = Date.now() + 10 * 60 * 1000;        /* 关一次，安静 10 分钟 */
+      hideOfflineBanner();
+    };
+    requestAnimationFrame(function(){ bar.classList.add('on'); });   /* 触发滑入回弹 */
   }
   const t = ts ? new Date(ts) : null;
-  bar.textContent = '数据服务离线，当前显示的是缓存数据（' + (t ? ('更新于 ' + t.getHours() + ':' + String(t.getMinutes()).padStart(2, '0')) : '时间未知') + '），恢复后自动刷新';
+  const hm = t ? (t.getHours() + ':' + String(t.getMinutes()).padStart(2, '0')) : '时间未知';
+  bar.querySelector('.sb-ob-sub').textContent = '显示 ' + hm + ' 的快照 · 网络恢复后自动更新';
+}
+/* 点「重试」：立即拉一次数，成功即退场；失败按钮抖一下告知 */
+function sbObRetry(bar){
+  const btn = bar.querySelector('.sb-ob-btn');
+  if(btn.disabled) return;
+  btn.disabled = true; btn.textContent = '重试中…';
+  loadRemote(false).then(function(ok){
+    if(ok){ hideOfflineBanner(); return; }
+    btn.disabled = false; btn.textContent = '重试';
+    btn.classList.add('shake'); setTimeout(function(){ btn.classList.remove('shake'); }, 500);
+  });
 }
 function hideOfflineBanner(){
   const bar = document.getElementById('offlineBar');
-  if(bar) bar.remove();
+  if(!bar || bar.classList.contains('out')) return;
+  bar.classList.remove('on');
+  bar.classList.add('out');
+  setTimeout(function(){ if(bar.parentNode) bar.remove(); }, 340);
 }
 /* 【18号 2026-10-25】进板统一入口：本机快照首屏秒开 → 后台拉新鲜数据静默替换。
    隧道慢/断时用户先看到 24h 内快照 + 顶部警示条，不再白屏 2-4 秒、也不会被弹回登录门。 */
