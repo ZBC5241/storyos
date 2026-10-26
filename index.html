@@ -2266,7 +2266,7 @@ body.sb-no-anim *{animation:none!important;transition:none!important}
 /* 防登录门闪现（FOUC）：head 同步脚本在渲染前判定登录态，已登录则首帧即隐藏登录门 */
 html.authed .login-gate{display:none!important}
 .v111-login{width:100%;display:flex;align-items:center;justify-content:center}
-.v111-login-card{width:min(100%,400px);padding:34px 28px 24px;
+.v111-login-card{width:min(100%,400px);margin:0 auto;padding:34px 28px 24px;
   background-color:rgba(248,248,250,.78);
   background-image:linear-gradient(145deg,rgba(255,255,255,.94),rgba(247,247,249,.76) 54%,rgba(242,242,247,.72));
   border:1px solid rgba(255,255,255,.96);border-radius:34px;
@@ -2369,7 +2369,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261024_4';
+    var V = 'sb_20261026_1';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
