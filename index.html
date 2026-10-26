@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f6f7fb">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0D0F14">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>门店业绩看板</title>
@@ -1974,6 +1975,88 @@ body[data-board="ops"] .ai-log-item{opacity:1;}
      will-change 提升会产生独立透明层，滚动时边缘易闪出黑线；现代 Safari 自行管理该层 */
 }
 
+
+/* ===== storyos-dark-v2：深色模式（机械翻译自 iOS26 玻璃层，浅色零影响）===== */
+@media(prefers-color-scheme:dark){
+  :root{
+    --tx:#E9EBF2!important;--tx2:#A9B1C2!important;--tx3:#7A8296!important;
+    --purple:#A78BFA!important;--purple2:#C4B5FD!important;--purpleDim:rgba(167,139,250,.16)!important;
+    --blue:#5AB0FF!important;--blueDim:rgba(90,176,255,.16)!important;
+    --green:#4ADE80!important;--greenDim:rgba(74,222,128,.14)!important;
+    --amber:#FBBF24!important;--amberDim:rgba(251,191,36,.15)!important;
+    --red:#F87171!important;--red2:#FCA5A5!important;--redDim:rgba(248,113,113,.16)!important;
+    --gray:#8B93A7!important;--grayDim:rgba(139,147,167,.2)!important;
+    --ai:#5AB0FF!important;--ai2:#8CCBFF!important;--aiSoft:rgba(90,176,255,.12)!important;
+    --soft:rgba(255,255,255,.055)!important;--panel:#161922!important;
+    --lg-canvas:#0D0F14;--lg-ink:#E9EBF2;--lg-sub:#A9B1C2;--lg-muted:#7A8296;
+  }
+  html{background:#0D0F14!important}
+  body{
+    color:var(--tx)!important;
+    background:
+      radial-gradient(34rem 24rem at -8% -6%,rgba(122,110,220,.10),transparent 64%),
+      radial-gradient(27rem 22rem at 104% 3%,rgba(90,140,220,.07),transparent 66%),
+      linear-gradient(180deg,#0D0F14 0%,#0F1218 53%,#0D0F14 100%)!important;
+  }
+  body::before,body::after{content:none!important}
+  html{background:#0D0F14!important}
+  body{color:var(--tx)!important;background:radial-gradient(34rem 24rem at -8% -6%,rgba(255,255,255,.07),transparent 64%),
+    radial-gradient(27rem 22rem at 104% 3%,rgba(119,190,245,.17),transparent 66%),
+    radial-gradient(22rem 19rem at 8% 94%,rgba(135,214,194,.11),transparent 70%),
+    radial-gradient(20rem 17rem at 102% 88%,rgba(255,211,171,.09),transparent 72%),
+    linear-gradient(180deg,#10131A 0%,#0F1218 53%,#0F1218 100%)!important}
+  body::before{background:radial-gradient(20rem 13rem at 28% 8%,rgba(255,255,255,.07),transparent 75%),radial-gradient(19rem 16rem at 78% 70%,rgba(175,211,232,.08),transparent 75%)!important}
+  body::after{background:linear-gradient(180deg,rgba(255,255,255,.07),transparent 33%,rgba(42,50,59,.018))!important}
+  .logo{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(232,243,250,.28))!important;color:var(--tx)!important;border:1px solid rgba(255,255,255,.12)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 5px 13px rgba(48,62,80,.08)!important}
+  .logo.on{color:#5AB0FF!important;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(223,241,255,.35))!important}
+  .card,.kpi,.rk,.day,.bt-c,.q,.ct,.pf,.adv,.mc,.tx-card,.tx-pf,.hero,.rows,.lag-tip,.wp-task{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.07))!important;border:1px solid rgba(255,255,255,.12)!important;box-shadow:0 7px 19px rgba(48,61,76,.06),inset 0 1px 0 rgba(255,255,255,.05)!important}
+  .tp-bar,.kpi-bar,.row-bar,.mc-track,.cat-chart,.hb-track{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .ai-brand i{color:#0679df!important;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(216,239,255,.43))!important;border:1px solid rgba(255,255,255,.12)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 4px 10px rgba(46,88,121,.08)!important}
+  body[data-board="ops"] .ai-score{background:conic-gradient(#0a84ff var(--score),rgba(88,113,136,.13) 0)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)!important}
+  body[data-board="ops"] .ai-score:after{background:rgba(248,251,252,.88)!important;border:1px solid rgba(255,255,255,.12)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important}
+  body[data-board="ops"] .ai-loop-badge{color:#3e5366!important;background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .ai-metric{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.07))!important;border:1px solid rgba(255,255,255,.12)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important}
+  body[data-board="ops"] .ai-avatar{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(215,239,255,.40))!important;color:#5AB0FF!important;border:1px solid rgba(255,255,255,.12)!important}
+  body[data-board="ops"] :is(.ai-chip,.ai-pk,.ai-loop-kpi,.ai-action-meta span,.ai-todo-owner,.ai-phase-k,.ai-reality-k,.ai-funnel-k,.ai-funnel-stage,.ai-review-item){background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important;color:#586775!important}
+  body[data-board="ops"] .ai-ops-rule{background:linear-gradient(180deg,rgba(255,249,236,.62),rgba(255,255,255,.07))!important;border-color:rgba(226,174,94,.24)!important}
+  body[data-board="ops"] :is(.ai-open-task,.ai-phase-actions button,.ai-reality-note button){background:#25313c!important;color:#fff!important;box-shadow:none!important}
+  body[data-board="ops"] .ai-phase-actions button.ghost{background:rgba(255,255,255,.07)!important;color:#53616e!important;border:1px solid rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .ai-world-nav button{background:rgba(255,255,255,.07)!important;color:#52616f!important;border:1px solid rgba(255,255,255,.12)!important;box-shadow:none!important}
+  body[data-board="ops"] .ai-world-nav button.primary{background:#26333e!important;color:#fff!important;border-color:#26333e!important}
+  body[data-board="ops"] .op-mark{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(215,239,255,.42))!important;color:#5AB0FF!important;border:1px solid rgba(255,255,255,.12)!important;box-shadow:inset 0 1px 0 #fff!important}
+  body[data-board="ops"] .op-lever{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important}
+  body[data-board="ops"] .op-seq-row{background:rgba(255,255,255,.07)!important;border-color:rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .op-seq-no{background:#26343f!important;color:#fff!important}
+  body[data-board="ops"] .op-seq-row button{background:rgba(255,255,255,.07)!important;color:#345a76!important;border:1px solid rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .ai-live-k{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .ai-system-event{background:rgba(255,255,255,.07)!important;color:#556472!important;border-color:rgba(255,255,255,.12)!important}
+  body[data-board="ops"] :is(.v28-handbox textarea,.v29-panel input,.v29-panel textarea,.v29-panel select){background:rgba(255,255,255,.07)!important;color:#27333d!important;border:1px solid rgba(188,202,214,.65)!important}
+  body[data-board="ops"] .op-staff{background:rgba(255,255,255,.07)!important;border-color:rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .op-staff-avatar,.v28-avatar{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(219,240,253,.42))!important;color:#5AB0FF!important;border:1px solid rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .op-staff-k{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .ai-reality-card{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important}
+  body[data-board="ops"] .ai-reality-k{background:rgba(255,255,255,.07)!important}
+  body[data-board="ops"] .op-q{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .ai-loop-kpi{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important}
+  .ai-action-num{background:#273640!important;color:#fff!important}
+  body[data-board="ops"] .ai-action-status{background:rgba(255,255,255,.07)!important;color:#5d6b78!important;border:1px solid rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .op-cust{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .ai-funnel-k,.ai-funnel-stage{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .ai-cust-grid input,.ai-cust-grid select{background:rgba(255,255,255,.07)!important;color:#26323c!important;border-color:rgba(186,201,214,.68)!important}
+  body[data-board="ops"] .op-rq{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .ai-review-item{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important;color:#52616e!important}
+  body[data-board="ops"] .ai-review-text{background:#2e3943!important;color:#eef4f6!important;border:1px solid rgba(255,255,255,.12)!important}
+  body[data-board="ops"] .v28-hand-actions button.primary{background:linear-gradient(135deg,#0a84ff,#58b9ff)!important;color:#fff!important}
+  .v28-hand-actions button.ghost{background:rgba(255,255,255,.07)!important;color:#52616e!important;border:1px solid rgba(255,255,255,.12)!important}
+  .tabs{background-image:linear-gradient(var(--lg-angle),rgba(255,255,255,.07),rgba(255,255,255,.07) 46%,transparent 70%),linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.07))!important}
+  body[data-board="ops"] .ai-section{background-image:linear-gradient(var(--lg-angle),rgba(255,255,255,.07),transparent 56%),linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.07))!important}
+  body[data-board="ops"] input:focus,body[data-board="ops"] select:focus,body[data-board="ops"] textarea:focus{border-color:rgba(10,132,255,.36)!important;box-shadow:0 0 0 3px rgba(10,132,255,.07),inset 0 1px 0 rgba(255,255,255,.05)!important}
+  .btn-p,.ai-action-btn,.op-linkbtn{box-shadow:0 7px 17px rgba(10,132,255,.15),inset 0 1px 0 rgba(255,255,255,.05)!important}
+  .btn-g,.ai-mini-btn,.chip:not(.on),.ai-chip,.wp-tab button:not(.on){color:#4f5d69!important;background:rgba(255,255,255,.07)!important;border-color:rgba(255,255,255,.12)!important}
+  body[data-board="ops"] :is(.btn-p,.ai-action-btn,.op-linkbtn){background:linear-gradient(180deg,#2493ff,#0a84ff)!important;color:#fff!important;border:1px solid rgba(255,255,255,.12)!important;box-shadow:0 6px 14px rgba(10,132,255,.17),inset 0 1px 0 rgba(255,255,255,.05)!important}
+  body[data-board="ops"] :is(.btn-g,.ai-mini-btn,.chip:not(.on),.ai-chip,.wp-tab button:not(.on)){color:#4d5a67!important;background:rgba(255,255,255,.07)!important;border-color:rgba(255,255,255,.12)!important}
+  .tab.on{color:var(--fc-blue)!important;background:rgba(255,255,255,.07)!important;border-color:rgba(255,255,255,.12)!important}
+}
 </style>
 <style id="ios26-production-release-guards">
 /* Production UI guards: task sheet, legibility, safe-area and stable interaction states. */
