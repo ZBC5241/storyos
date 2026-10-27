@@ -10,6 +10,7 @@
 <!-- 【18号 2026-10-25】售票厅隧道预连接：省 DNS+TLS 握手，首屏拉数快 200-500ms -->
 <link rel="preconnect" href="https://lijiacun-board.serveousercontent.com">
 <link rel="dns-prefetch" href="https://lijiacun-board.serveousercontent.com">
+<link rel="stylesheet" href="login.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='19' font-size='19'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E">
 <style>
 :root{
@@ -2135,10 +2136,6 @@ body[data-board="ops"] :is(.ai-action-target,.ai-action-standard,.ai-action-resu
 </style>
 
 <style>
-/* ===== 登录门 —— 逐字克隆 kucun 仓库 v111 登录页（iOS 系统中性色 + 系统蓝） ===== */
-.login-gate{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;padding:24px;
-  background:linear-gradient(180deg,#fafafa 0%,#f2f2f7 52%,#e9e9ee 100%);}
-.login-gate.hide{display:none}
 /*【18号 2026-10-25】白屏根治三件套：骨架屏 / 免动画渲染 / 快照提示 */
 .sb-skel{padding-top:26px}
 .sb-sk{position:relative;overflow:hidden;background:#eef0f5;margin-bottom:14px;border-radius:var(--r)}
@@ -2147,7 +2144,7 @@ body[data-board="ops"] :is(.ai-action-target,.ai-action-standard,.ai-action-resu
   transform:translateX(-100%);animation:sbShimmer 1.4s infinite}
 .sb-sk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
 .sb-skel-t{text-align:center;font-size:12px;color:var(--tx3);padding:18px 0 6px;letter-spacing:.5px}
-@keyframes sbShimmer{to{transform:translateX(100%)}}
+@keyframes sbShimmer{to{transform:translateX(100)}}
 body.sb-no-anim *{animation:none!important;transition:none!important}
 /*【18号 2026-10-25】离线提示条 · 极致版：玻璃浮条 + 脉冲状态点 + 主副文案 + 重试/关闭，滑入回弹、退场淡出 */
 .sb-ob{position:fixed;top:64px;left:50%;transform:translate(-50%,-16px);z-index:1000;
@@ -2176,51 +2173,9 @@ body.sb-no-anim *{animation:none!important;transition:none!important}
   padding:4px 2px 4px 6px;cursor:pointer;flex:none;opacity:.55;transition:.15s}
 .sb-ob-x:hover{opacity:1}
 @media (prefers-reduced-motion:reduce){.sb-ob,.sb-ob-dot{animation:none;transition:none}}
-/* 防登录门闪现（FOUC）：head 同步脚本在渲染前判定登录态，已登录则首帧即隐藏登录门 */
-html.authed .login-gate{display:none!important}
-.v111-login{width:100%;display:flex;align-items:center;justify-content:center}
-.v111-login-card{width:min(100%,400px);padding:34px 28px 24px;
-  background-color:rgba(248,248,250,.78);
-  background-image:linear-gradient(145deg,rgba(255,255,255,.94),rgba(247,247,249,.76) 54%,rgba(242,242,247,.72));
-  border:1px solid rgba(255,255,255,.96);border-radius:34px;
-  box-shadow:0 18px 46px rgba(0,0,0,.09),0 3px 9px rgba(0,0,0,.035),inset 0 1.5px 0 #fff,inset 0 -1px 0 rgba(60,60,67,.10);
-  backdrop-filter:none;-webkit-backdrop-filter:none;}
-.v111-login-mark{width:64px;height:64px;margin:0 auto 20px;border-radius:21px;font-size:17px;font-weight:600;
-  display:grid;place-items:center;color:#fff;border:1px solid rgba(255,255,255,.62);
-  background:linear-gradient(155deg,#64d2ff,#7c3aed 50%,#0071e3);
-  box-shadow:inset 0 1px 1px rgba(255,255,255,.72),0 8px 20px rgba(0,122,255,.20);}
-.v111-login h1{font-size:26px;text-align:center;font-weight:650;letter-spacing:-.8px;margin:0 0 26px;color:#1c1c1e;}
-.v111-field{display:block;margin-top:17px;}
-.v111-field span{display:block;font-size:13px;color:#6e6e73;margin:0 0 7px 5px;}
-.v111-field input{width:100%;height:54px;border:1px solid rgba(60,60,67,.12);border-radius:17px;padding:0 16px;
-  background:rgba(255,255,255,.74);color:#1c1c1e;font-size:17px;outline:none;
-  box-shadow:inset 0 1px 2px rgba(15,23,42,.035),inset 0 1px 0 rgba(255,255,255,.88);
-  transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease;}
-.v111-field input:focus{background:#fff;border-color:rgba(0,122,255,.48);
-  box-shadow:0 0 0 3px rgba(0,122,255,.10),inset 0 1px 0 #fff;}
-.v111-submit{width:100%;min-height:52px;margin-top:26px;border:1px solid rgba(255,255,255,.48);border-radius:27px;
-  background:linear-gradient(180deg,#168cff,#007aff);cursor:pointer;font:inherit;font-weight:600;color:#fff;
-  box-shadow:0 8px 20px rgba(0,122,255,.22),inset 0 1px 0 rgba(255,255,255,.38),inset 0 -1px 0 rgba(0,72,158,.22);}
-.v111-submit:active{background:linear-gradient(180deg,#0a7fea,#006ee6);}
-.v111-login-error{min-height:22px;margin-top:14px;text-align:center;color:#bf3e49;font-size:13px;}
-.v111-logout{appearance:none;display:inline-flex;align-items:center;justify-content:center;
-  border:1px solid rgba(120,130,160,.28);background:rgba(255,255,255,.55);color:#64748b;
-  padding:0 10px;height:22px;border-radius:11px;
-  font:inherit;font-size:10.5px;font-weight:700;cursor:pointer;opacity:.85;transition:.15s;}
-.top .v111-logout{position:absolute;right:16px;top:81px;margin-left:0}
-/* 退出按钮绝对定位挂在头部右上：进度环下方、「剩 N 天」上方的空档（相对 sticky 头部定位，随头部固定，卡片尺寸不变） */
-.v111-logout:hover{opacity:1;color:#b42318;border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.06)}
-/* =====【18号 2026-10-23】忘记密码/自助改密入口（登录按钮下方，市面常见「忘记密码」同款样式） ===== */
-.v111-aux{display:flex;justify-content:center;margin-top:6px}
-.v111-forgot{appearance:none;background:none;border:none;cursor:pointer;font:inherit;
-  font-size:13.5px;font-weight:500;color:#7c3aed;padding:8px 6px;letter-spacing:.2px}
-.v111-forgot:active{opacity:.55}
-.v111-pane{display:none;width:100%}
-.v111-pane.on{display:block;animation:v111paneIn .28s cubic-bezier(.32,.72,.35,1)}
-@keyframes v111paneIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
-.v111-ok{min-height:22px;margin-top:14px;text-align:center;color:#1d8a4e;font-size:13px;font-weight:600}
-.v111-ok::before{content:"✓ ";font-weight:700}
 </style>
+<!-- 【18号 2026-10-27 根治】登录门样式已抽到 login.css（见 head <link>），脱离 index.html 的来回回退/flatten，居中不再被连带抹掉 -->
+
 
 <style id="store-dock-style">
 /* 方案二 Dock 店名切换（按下展开、拖拽拨动、松手收起切店）—— 仅 all 模式显示 */
@@ -2270,7 +2225,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261024_4';
+    var V = 'sb_20261027_1';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
