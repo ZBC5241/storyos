@@ -18,10 +18,10 @@ html.authed .login-gate{display:none!important}
   background-image:linear-gradient(145deg,rgba(255,255,255,.94),rgba(247,247,249,.76) 54%,rgba(242,242,247,.72));
   border:1px solid rgba(255,255,255,.96);border-radius:34px;
   box-shadow:0 18px 46px rgba(0,0,0,.09),0 3px 9px rgba(0,0,0,.035),inset 0 1.5px 0 #fff,inset 0 -1px 0 rgba(60,60,67,.10);
-  backdrop-filter:none;-webkit-backdrop-filter:none;}
+  backdrop-filter:blur(30px) saturate(160%);-webkit-backdrop-filter:blur(30px) saturate(160%);}
 .v111-login-mark{width:64px;height:64px;margin:0 auto 20px;border-radius:21px;font-size:17px;font-weight:600;
   display:grid;place-items:center;color:#fff;border:1px solid rgba(255,255,255,.62);
-  background:linear-gradient(155deg,#64d2ff,#7c3aed 50%,#0071e3);
+  background:linear-gradient(155deg,#64d2ff,#0a84ff 50%,#0071e3);
   box-shadow:inset 0 1px 1px rgba(255,255,255,.72),0 8px 20px rgba(0,122,255,.20);}
 .v111-login h1{font-size:26px;text-align:center;font-weight:650;letter-spacing:-.8px;margin:0 0 26px;color:#1c1c1e;}
 .v111-field{display:block;margin-top:17px;}
