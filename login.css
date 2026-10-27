@@ -54,16 +54,6 @@ html.authed .login-gate{display:none!important}
 .v111-ok{min-height:22px;margin-top:14px;text-align:center;color:#1d8a4e;font-size:13px;font-weight:600}
 .v111-ok::before{content:"✓ ";font-weight:700}
 
-/* 深色模式：iOS26 深玻璃（与经营看板反色对齐） */
-@media(prefers-color-scheme:dark){
-  .login-gate{background:linear-gradient(180deg,#151517 0%,#09090b 56%,#000 100%);}
-  .v111-login-card{background-color:rgba(36,36,39,.90);
-    background-image:linear-gradient(145deg,rgba(58,58,62,.86),rgba(31,31,34,.92) 58%,rgba(21,24,27,.94));
-    border-color:rgba(255,255,255,.13);
-    box-shadow:0 20px 52px rgba(0,0,0,.44),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.36);}
-  .v111-login h1{color:#f5f5f7}.v111-field span{color:#aeaeb2}
-  .v111-field input{color:#f5f5f7;background:rgba(255,255,255,.065);border-color:rgba(255,255,255,.10);
-    box-shadow:inset 0 1px 1px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.09);}
-  .v111-field input:focus{background:rgba(255,255,255,.09);border-color:rgba(10,132,255,.62);
-    box-shadow:0 0 0 3px rgba(10,132,255,.15),inset 0 1px 0 rgba(255,255,255,.07);}
-}
+/* 【18号 2026-10-28 修正】登录页强制浅色 iOS 风，不跟随系统深色模式。
+ * 原因：此前抽离时误加 @media(prefers-color-scheme:dark) 覆盖块，用户系统开深色后
+ * 登录页整页变黑/变深灰，与原始 kucun v111 浅色克隆不符。现删除该覆盖，恒为浅色。 */
