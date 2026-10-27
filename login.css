@@ -46,7 +46,7 @@ html.authed .login-gate{display:none!important}
 /* =====【18号 2026-10-23】忘记密码/自助改密入口（登录按钮下方，市面常见「忘记密码」同款样式） ===== */
 .v111-aux{display:flex;justify-content:center;margin-top:6px}
 .v111-forgot{appearance:none;background:none;border:none;cursor:pointer;font:inherit;
-  font-size:13.5px;font-weight:500;color:#7c3aed;padding:8px 6px;letter-spacing:.2px}
+  font-size:13.5px;font-weight:500;color:#007aff;padding:8px 6px;letter-spacing:.2px}
 .v111-forgot:active{opacity:.55}
 .v111-pane{display:none;width:100%}
 .v111-pane.on{display:block;animation:v111paneIn .28s cubic-bezier(.32,.72,.35,1)}
