@@ -2225,7 +2225,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261028_3';
+    var V = 'sb_20261029_1';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -3468,10 +3468,11 @@ function qcsHTML(Q){
   if(hy){
     h += '<div class="q"><div class="q-l">会员搭售率（30%）</div>'
       + '<div class="q-v num" style="' + qRateCol(hy.gap) + '">' + pct(hy.rate,1) + '</div>'
-      + '<div class="q-s">星联 ' + cnt(hy.care) + ' / 终端 ' + cnt(hy.terminal)
-      + (isNum(hy.gap) && hy.gap > 0 ? ' · 超 <em style="color:var(--red)">' + cnt(hy.gap) + '</em>' : '')
-      + (isNum(hy.gap) && hy.gap < 0 ? ' · 缺 <em style="color:var(--green)">' + cnt(-hy.gap) + '</em>' : '')
-      + '</div></div>';
+    + '<div class="q-s">星联 ' + cnt(hy.care) + ' / 终端 ' + cnt(hy.terminal)
+    + (isNum(hy.gap) && hy.gap > 0 ? ' · 超 <em style="color:var(--red)">' + cnt(hy.gap) + '</em>'
+       : (isNum(hy.gap) && hy.gap < 0 ? ' · 缺 <em style="color:var(--green)">' + cnt(-hy.gap) + '</em>'
+          : (isNum(hy.gap) && hy.gap === 0 ? ' · <em style="color:var(--green)">达标</em>' : '')))
+    + '</div></div>';
   }
 
   const hs = Q['回收搭售率'];
