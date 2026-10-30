@@ -2225,7 +2225,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261029_1';
+    var V = 'sb_20261030_1';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -2544,14 +2544,25 @@ function doLogout(){
 const LOGIN_KEY = 'storyos_login_v1';
 const LOGIN_TTL_MS = (typeof window !== 'undefined' && window.__LOGIN_TTL_MS) || (48 * 60 * 60 * 1000);   /* 48 小时，唯一来源=头部防闪现内联脚本的 __LOGIN_TTL_MS */
 /* ===== B 方案数据流：带票拉数 → 应用 → 渲染；失败有降级（过期回门 / 离线看缓存） ===== */
-async function fetchData(){
-  let token = '';
-  try{ token = localStorage.getItem(TOKEN_KEY) || ''; }catch(e){}
-  if(!token){ showGate('请先登录'); return null; }
+/* 【18号 2026-10-30】隧道断流容忍：serveo 免费隧道会周期性秒级断流，此前 fetch 一失败就弹黄条，
+   用户每次被吓一跳（实际几秒后自动恢复）。修复：①fetch 失败后内部退避重试（立即/3s/5s，约16s
+   容忍窗口）吸收瞬断，绝大多数情况根本不弹条；②全失败才降级快照并挂黄条；③黄条期后台每10s静默
+   续拉 + 监听 online 事件，隧道一恢复自动隐藏并刷新看板。 */
+let sbFailSince = 0;
+let sbBgTimer = null;
+function stopBgRetry(){ if(sbBgTimer){ clearInterval(sbBgTimer); sbBgTimer = null; } }
+function startBgRetry(token){
+  stopBgRetry();
+  /* 后台静默续拉：恢复即自动隐藏 + 刷新看板 */
+  sbBgTimer = setInterval(function(){
+    loadRemote(true).then(function(ok){ if(ok){ hideOfflineBanner(); stopBgRetry(); } });
+  }, 10000);
+}
+async function fetchDataOnce(token){
   try{
-    /* 【18号 2026-10-25】5 秒超时：隧道僵住时不干等（浏览器默认超时很长，白屏元凶之一） */
+    /* 超时 8s：隧道僵住时不干等（浏览器默认超时很长，白屏元凶之一） */
     const ctrl = new AbortController();
-    const tmr = setTimeout(() => ctrl.abort(), 5000);
+    const tmr = setTimeout(() => ctrl.abort(), 8000);
     let r;
     try{
       r = await fetch(API_BASE + '/api/data?token=' + encodeURIComponent(token), {cache: 'no-store', signal: ctrl.signal});
@@ -2559,33 +2570,49 @@ async function fetchData(){
     if(r.status === 401){                      /* 票过期/无效：清干净回登录门 */
       try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(LOGIN_KEY); }catch(e){}
       showGate('登录已过期，请重新登录');
-      return null;
+      throw new Error('__401__');
     }
     if(!r.ok) throw new Error('HTTP ' + r.status);
     const j = await r.json();
     const norm = (j.store === 'all') ? j.data : Object.assign({}, {[j.store]: j.data});
     try{ sessionStorage.setItem(CACHE_KEY, JSON.stringify({ts: Date.now(), payload: norm})); }catch(e){}
-    /* 【18号 2026-10-25】写本机快照（按当前 MODE 分键）：下次打开首屏秒开 */
+    /* 写本机快照（按当前 MODE 分键）：下次打开首屏秒开 */
     try{ localStorage.setItem(SNAP_KEY + '_' + MODE, JSON.stringify({ts: Date.now(), payload: norm})); }catch(e){}
-    hideOfflineBanner();
     return norm;
-  }catch(e){
-    /* 售票厅不可达（隧道断/Mac 睡眠）：24h 内的会话缓存可降级查看，顶部挂警示条 */
-    try{
-      const c = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
-      if(c && c.payload && Date.now() - c.ts < 24 * 3600 * 1000){
-        showOfflineBanner(c.ts);
-        return c.payload;
-      }
-    }catch(e2){}
-    /* 【18号 2026-10-25】本机有 24h 快照时静默返回 null，不弹登录门——
-       由调用方（loginApply 已渲染快照 / loadRemote 界面照常）按快照降级，
-       堵住「快照兜底了门还被弹出来盖住看板」的回归（实测复现：门+黄条+看板全乱） */
-    if(readSnap(MODE)) return null;
-    showGate('数据服务连接失败：' + ((e && e.message) || '网络异常') + '。稍后自动恢复，持续出现请联系店长检查售票厅');
-    return null;
-  }
+  }catch(e){ if(e && e.message === '__401__') throw e; return null; }
 }
+async function fetchData(){
+  let token = '';
+  try{ token = localStorage.getItem(TOKEN_KEY) || ''; }catch(e){}
+  if(!token){ showGate('请先登录'); return null; }
+  /* 内部退避重试：消化 serveo 秒级瞬断，避免一抖就弹黄条 */
+  const backoff = [0, 3000, 5000];
+  for(let i = 0; i < backoff.length; i++){
+    if(i > 0) await new Promise(r => setTimeout(r, backoff[i]));
+    try{
+      const p = await fetchDataOnce(token);
+      if(p){ hideOfflineBanner(); stopBgRetry(); sbFailSince = 0; return p; }
+    }catch(e){ return null; }            /* 401 已回门，不重试 */
+  }
+  /* 容忍窗口内仍全失败 → 降级快照（顶部挂黄条） */
+  try{
+    const c = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
+    if(c && c.payload && Date.now() - c.ts < 24 * 3600 * 1000){
+      showOfflineBanner(c.ts);
+      startBgRetry(token);
+      return c.payload;
+    }
+  }catch(e2){}
+  /* 本机有 24h 快照时静默返回 null，不弹登录门——由调用方按快照降级，堵住「门+黄条+看板全乱」回归 */
+  if(readSnap(MODE)){ showOfflineBanner(Date.now()); startBgRetry(token); return null; }
+  showGate('数据服务连接失败：网络异常。稍后自动恢复，持续出现请联系店长检查售票厅');
+  return null;
+}
+/* 网络恢复（浏览器 online 事件）：隧道恢复瞬间立即续拉，成功即隐藏黄条 + 刷新看板 */
+window.addEventListener('online', function(){
+  const t = (function(){ try{ return localStorage.getItem(TOKEN_KEY) || ''; }catch(e){ return ''; } })();
+  if(t && sbBgTimer){ loadRemote(true).then(function(ok){ if(ok){ hideOfflineBanner(); stopBgRetry(); } }); }
+});
 function applyPayload(store, payload){
   PAYLOAD = payload;
   CUR_STORE = (store === 'hyc') ? 'hyc' : 'ljc';
