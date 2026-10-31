@@ -2225,7 +2225,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261030_1';
+    var V = 'sb_20261101_1';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -3493,7 +3493,7 @@ function qcsHTML(Q){
 
   const hy = Q['会员搭售率'];
   if(hy){
-    h += '<div class="q"><div class="q-l">会员搭售率（30%）</div>'
+    h += '<div class="q"><div class="q-l">会员搭售率（' + (hy.target!=null?Math.round(hy.target*100):30) + '%）</div>'
       + '<div class="q-v num" style="' + qRateCol(hy.gap) + '">' + pct(hy.rate,1) + '</div>'
     + '<div class="q-s">星联 ' + cnt(hy.care) + ' / 终端 ' + cnt(hy.terminal)
     + (isNum(hy.gap) && hy.gap > 0 ? ' · 超 <em style="color:var(--red)">' + cnt(hy.gap) + '</em>'
@@ -3504,7 +3504,7 @@ function qcsHTML(Q){
 
   const hs = Q['回收搭售率'];
   if(hs){
-    h += '<div class="q"><div class="q-l">回收搭售率（20%）</div>'
+    h += '<div class="q"><div class="q-l">回收搭售率（' + (hs.target!=null?Math.round(hs.target*100):20) + '%）</div>'
       + '<div class="q-v num" style="' + qRateCol(hs.gap) + '">' + pct(hs.rate,1) + '</div>'
       + '<div class="q-s">单数 ' + cnt(hs.orders)
       + (isNum(hs.gap) && hs.gap > 0 ? ' · 超 <em style="color:var(--red)">' + cnt(hs.gap) + '</em>' : '')
@@ -3514,7 +3514,7 @@ function qcsHTML(Q){
 
   const tm = Q['贴膜率'];
   if(tm){
-    h += '<div class="q"><div class="q-l">贴膜率（50%）</div>'
+    h += '<div class="q"><div class="q-l">贴膜率（' + (tm.target!=null?Math.round(tm.target*100):50) + '%）</div>'
       + '<div class="q-v num" style="' + qRateCol(tm.gap) + '">' + pct(tm.rate,1) + '</div>'
       + '<div class="q-s">单数 ' + cnt(tm.orders)
       + (isNum(tm.gap) && tm.gap > 0 ? ' · 超 <em style="color:var(--red)">' + cnt(tm.gap) + '</em>' : '')
