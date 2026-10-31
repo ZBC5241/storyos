@@ -2225,7 +2225,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261101_1';
+    var V = 'sb_20261101_2';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -2676,10 +2676,12 @@ function hideOfflineBanner(){
 }
 /* 【18号 2026-10-25】进板统一入口：本机快照首屏秒开 → 后台拉新鲜数据静默替换。
    隧道慢/断时用户先看到 24h 内快照 + 顶部警示条，不再白屏 2-4 秒、也不会被弹回登录门。 */
+function safeSig(o){ try{ return JSON.stringify(o); }catch(e){ return 'sig_err_'+Math.random(); } }
 async function loginApply(store){
   MODE = store;                                  // 'ljc' | 'hyc' | 'all'
   setSwitcher(store === 'all');
   const snap = readSnap(store);
+  const snapSig = snap ? safeSig(snap.payload) : null;
   if(snap){
     applyPayloadQuiet(store, snap.payload);      /* 快照首屏：免入场动画，瞬间出数 */
     document.getElementById('loginGate').classList.add('hide');
@@ -2699,7 +2701,10 @@ async function loginApply(store){
     if(snap){ showOfflineBanner(snap.ts); return true; }   /* 有快照：挂警示条继续看 */
     return false;                                        /* 401 已回门 / 无快照的网络失败：fetchData 已提示 */
   }
-  applyPayloadQuiet(store, payload);             /* 鲜数据替换：同样免动画，不闪 */
+  /* 【18号 2026-11-01】首屏指纹守卫：快照与拉取数据签名一致时跳过二次重绘，消掉华为下拉刷新闪2次（同源：签名没变不重绘） */
+  if(safeSig(payload) !== snapSig){
+    applyPayloadQuiet(store, payload);             /* 鲜数据替换：同样免动画，不闪 */
+  }
   document.getElementById('loginGate').classList.add('hide');
   document.documentElement.classList.add('authed');   /* 同步首帧隐藏标记（防下拉刷新闪登录页） */
   return true;
