@@ -7,9 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>门店业绩看板</title>
-<!-- 【18号 2026-10-25】售票厅隧道预连接：省 DNS+TLS 握手，首屏拉数快 200-500ms -->
-<link rel="preconnect" href="https://lijiacun-board.serveousercontent.com">
-<link rel="dns-prefetch" href="https://lijiacun-board.serveousercontent.com">
+<!-- 【18号 2026-10-31】售票厅地址已同源化（serveo / cloudflare 隧道都能直接打开，无需写死主机名），故移除写死域名的 preconnect/dns-prefetch -->
 <link rel="stylesheet" href="login.css?v=sb_20261028_3">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='19' font-size='19'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E">
 <style>
@@ -2225,7 +2223,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261030_1';
+    var V = 'sb_20261031_1';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -2450,7 +2448,9 @@ let CUR_STORE = 'ljc';           /* 当前展示的门店（all 账号切换用�
 const API_BASE = new URLSearchParams(location.search).get('api')
   || ((location.hostname === '127.0.0.1' || location.hostname === 'localhost')
       ? 'http://127.0.0.1:8802'
-      : 'https://lijiacun-board.serveousercontent.com');
+      : (location.protocol === 'file:'
+          ? 'https://lijiacun-board.serveousercontent.com'   /* 本地 file:// 测试：回退绝对地址 */
+          : window.location.origin));   /* 同源：serveo / cloudflare 隧道都自动走对，无需改主机名 */
 const TOKEN_KEY = 'storyos_token_v1';
 const CACHE_KEY = 'storyos_payload_cache';
 const SNAP_KEY  = 'storyos_snap_v1';   /* 【18号 2026-10-25】本机快照（按 store 分键，24h）——首屏秒开，隧道慢不再白屏 */
