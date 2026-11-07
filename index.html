@@ -10,7 +10,7 @@
 <!-- 【18号 2026-10-25】售票厅隧道预连接：省 DNS+TLS 握手，首屏拉数快 200-500ms -->
 <link rel="preconnect" href="https://lijiacun-board.serveousercontent.com">
 <link rel="dns-prefetch" href="https://lijiacun-board.serveousercontent.com">
-<link rel="stylesheet" href="login.css?v=sb_20261028_3">
+<link rel="stylesheet" href="login.css?v=sb_20261107_1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='19' font-size='19'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E">
 <style>
 :root{
@@ -2225,7 +2225,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261101_2';
+    var V = 'sb_20261107_1';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -2264,6 +2264,94 @@ body[data-board="ops"] .ai-hero,body[data-board="ops"] .ai-section,body[data-boa
   backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
 }
 .ai-hero:before,.ai-hero:after{display:none!important;background:none!important}
+</style>
+
+<style id="ui-polish-20261107">
+/* ============================================================
+   UI 设计系统优化层 v1 · 2026-11-07（像素君）
+   原则：纯 CSS 增量覆盖 —— 零 DOM / 零 JS / 零数据改动，整段删除即可回滚。
+   位置：必须位于 flat-clean-override 之后；凡被其 !important 锁定的变量，
+        本层同样以 !important 取最终生效权。
+   目标：
+     ① 文字对比度达 WCAG AA 4.5:1（次级文字原 #8a90ab 仅约 3.0:1）
+     ② 最小字号下限：9.5~10.5px 小字统一提到 ≥11px
+     ③ 触控目标 ≥44px（WCAG 2.5.8 / Apple HIG）
+     ④ 设计令牌统一：阴影三层、圆角、间距节奏、动效曲线
+     ⑤ 视觉层级去噪：弱化首屏重复出现的「时间进度」副文案
+     ⑥ 无障碍：可见焦点环 + 尊重「减少动态效果」系统偏好
+   范围：经营看板页为主体；AI 洞察页仅继承全局对比度/焦点环，不改其定制排版。
+   ============================================================ */
+:root{
+  /* ① 对比度：白底 #fff 上 --tx3 由约 3.0:1 提升到约 4.9:1 */
+  --tx3:#666d8a !important;
+  --tx2:#4c5372 !important;
+  /* ④ 阴影统一为单一中性三层，去掉多余的紫调溢出 */
+  --shadow:0 6px 20px rgba(17,24,39,.07) !important;
+  --shadow-s:0 3px 12px rgba(17,24,39,.05) !important;
+  --shadow-h:0 12px 30px rgba(17,24,39,.11) !important;
+  /* 令牌：8pt 间距节奏 / 圆角 / 动效 */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-6:24px;
+  --r-card:16px; --r-hero:20px; --r-pill:999px;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+
+/* ② 可读性：最小字号下限 */
+body:not([data-board="ops"]) .tab span{font-size:11px;letter-spacing:.1px}
+body:not([data-board="ops"]) .top-t p{font-size:11.5px}
+body:not([data-board="ops"]) .tp-h,
+body:not([data-board="ops"]) .tp-days,
+body:not([data-board="ops"]) .sec-h .tail,
+body:not([data-board="ops"]) .hero-tp{font-size:11.5px}
+body:not([data-board="ops"]) .hero-t{font-size:12.5px}
+body:not([data-board="ops"]) .hero-row{font-size:13px}
+body:not([data-board="ops"]) .ring-c span{font-size:11px}
+body:not([data-board="ops"]) .kpi-l,
+body:not([data-board="ops"]) .kpi-s{font-size:11.5px}
+body:not([data-board="ops"]) .cat-q,
+body:not([data-board="ops"]) .cat-p{font-size:11px}
+body:not([data-board="ops"]) .lag-tip span{font-size:11.5px}
+body:not([data-board="ops"]) .empty{font-size:12px}
+body:not([data-board="ops"]) .top-t h1{font-weight:750;letter-spacing:0}
+
+/* ③ 触控目标：底部 Tab 与登录页文字链给足 44px */
+body:not([data-board="ops"]) .tab{min-height:50px;padding:9px 0 8px}
+.v111-forgot{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+
+/* ④ 圆角/阴影令牌落地（仅经营看板，避开 AI 页定制圆角） */
+body:not([data-board="ops"]) .card,
+body:not([data-board="ops"]) .kpi,
+body:not([data-board="ops"]) .rk,
+body:not([data-board="ops"]) .rows,
+body:not([data-board="ops"]) .mc{border-radius:var(--r-card)}
+body:not([data-board="ops"]) .hero{border-radius:var(--r-hero)}
+
+/* ⑤ 层级去噪：首屏「时间进度」重复出现 4 次，副文案降低权重，让数字成为视觉落点 */
+body:not([data-board="ops"]) .sec-h .tail{opacity:.72;font-weight:500}
+body:not([data-board="ops"]) .hero-tp{opacity:.82}
+body:not([data-board="ops"]) .kpi-v{color:#1b1e2e;letter-spacing:-.8px}
+body:not([data-board="ops"]) .sec-h{margin-bottom:var(--sp-3)}
+
+/* ⑥ 无障碍：键盘可见焦点（:where() 零特异性，不覆盖任何既有样式） */
+:where(button,[role="button"],a,input,.tab,.kpi,.rk,.chip):focus-visible{
+  outline:2px solid var(--purple);
+  outline-offset:2px;
+  border-radius:6px;
+}
+/* ⑥ 尊重系统「减少动态效果」：关掉入场/无限动画与长过渡（不改 JS 渲染逻辑） */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* 桌面：两列等高 + 图表卡内容居中，消除左下大片空洞 */
+@media (min-width:1024px){
+  body:not([data-board="ops"]) .chart-grid{align-items:stretch}
+  body:not([data-board="ops"]) .mc{display:flex;flex-direction:column;justify-content:center}
+}
 </style>
 
 </head>
