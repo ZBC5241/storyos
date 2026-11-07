@@ -56,8 +56,8 @@ svg{display:block}
   padding:calc(12px + var(--safeT)) 16px 12px;
   background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(246,247,251,.90));
   border-bottom:1px solid var(--line);
-  backdrop-filter:none;-webkit-backdrop-filter:none;
-  box-shadow:0 6px 22px rgba(70,60,130,.06);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  box-shadow:0 1px 0 rgba(0,0,0,.04);
 }
 .top-row{display:flex;align-items:center;gap:11px;padding-right:80px}
 .logo{
@@ -115,10 +115,10 @@ svg{display:block}
 .tabs{
   position:fixed;left:0;right:0;bottom:0;z-index:70;
   display:flex;background:rgba(255,255,255,.94);
-  backdrop-filter:none;-webkit-backdrop-filter:none;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border-top:1px solid var(--line);
   padding-bottom:var(--safeB);
-  box-shadow:0 -6px 22px rgba(70,60,130,.07);
+  box-shadow:0 -1px 0 rgba(0,0,0,.04);
 }
 .tab{
   flex:1;padding:8px 0 7px;text-align:center;cursor:pointer;
@@ -518,8 +518,8 @@ svg{display:block}
 
 /* ============ 弹层 ============ */
 .mask{
-  position:fixed;inset:0;z-index:200;background:rgba(40,36,80,.42);
-  backdrop-filter:none;-webkit-backdrop-filter:none;
+  position:fixed;inset:0;z-index:200;  background:rgba(40,36,80,.42);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   display:none;align-items:flex-end;
 }
 .mask.on{display:flex;animation:fade .2s}
@@ -788,7 +788,7 @@ svg{display:block}
 .ai-closure-log{display:flex;flex-direction:column;gap:6px}.ai-log-item{display:grid;grid-template-columns:58px 1fr;gap:8px;font-size:9.8px}.ai-log-time{color:var(--tx3);font-variant-numeric:tabular-nums}.ai-log-text{color:var(--tx2);line-height:1.55}.ai-log-text b{color:var(--tx)}
 
 /* 行动任务弹层 */
-.action-mask{position:fixed;inset:0;z-index:360;background:rgba(24,23,42,.52);backdrop-filter:none;-webkit-backdrop-filter:none;display:none;align-items:flex-end}.action-mask.on{display:flex;animation:fade .18s}
+.action-mask{position:fixed;inset:0;z-index:360;background:rgba(24,23,42,.52);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:none;align-items:flex-end}.action-mask.on{display:flex;animation:fade .18s}
 .action-sheet{width:100%;max-height:91vh;overflow:auto;background:var(--panel);border-radius:22px 22px 0 0;padding:8px 16px calc(20px + var(--safeB));box-shadow:0 -18px 50px rgba(31,34,51,.26);animation:up .28s cubic-bezier(.22,1,.36,1)}
 .action-sheet .grab{margin-bottom:11px}.action-sheet-head{display:flex;align-items:flex-start;gap:9px}.action-sheet-title{font-size:16px;font-weight:850;line-height:1.4}.action-sheet-sub{font-size:10.5px;color:var(--tx3);line-height:1.55;margin-top:3px}.action-close{margin-left:auto;width:30px;height:30px;border:0;border-radius:10px;background:var(--soft);color:var(--tx2);font-size:18px;cursor:pointer}
 .action-focus{background:var(--aiSoft);border:1px solid rgba(109,93,252,.12);border-radius:12px;padding:9px 10px;margin:11px 0}.action-focus b{display:block;font-size:10.5px;color:#4c4298}.action-focus span{display:block;font-size:10.3px;line-height:1.55;color:var(--tx2);margin-top:3px}
