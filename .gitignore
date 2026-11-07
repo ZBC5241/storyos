@@ -15,3 +15,6 @@ sa_ljc_raw.tsv
 sa_ljc_warehouse.json
 index.html.bak*
 sa_page_map_ljc.json
+
+# UI 优化本地备份（含完整页面，仅留本机）
+_backup_design/
