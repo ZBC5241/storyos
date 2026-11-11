@@ -52,6 +52,7 @@ def main():
     with open(HTML, 'r', encoding='utf-8') as f:
         html = f.read()
     changed = False
+    payload = {}
     for path, name, label, store in SOURCES:
         data = read_json(path)
         if data is None:
@@ -64,16 +65,24 @@ def main():
             sys.exit(1)
         if new_txt == old_txt:
             print(f"  ⏭ {label}({name}) 无变化")
-            html = html2                     # 无变化也统一走后面的剥离，保持空壳态
         else:
-            print(f"  ✅ {label}({name}) 已注入 meta.date={data.get('meta', {}).get('date')}")
-            html = html2
+            print(f"  ✅ {label}({name}) 已内嵌 meta.date={data.get('meta', {}).get('date')}")
             changed = True
-        # 售票厅数据源：与本档注入的数据严格一致
+        html = html2                      # A 方案（2026-11-12）：保留内嵌，不再剥离为 null
+        payload[store] = data
+        # 售票厅数据源：与本档内嵌的数据严格一致（保留，作登录后刷新通道）
         with open(os.path.join(SERVER_DATA, store + '.json'), 'w', encoding='utf-8') as f:
             f.write(new_txt)
-        # 剥离：Pages 页面里的数据常量置 null（前端改从售票厅拉取，见 index.html 登录/拉数逻辑）
-        html, _ = replace_constant(html, name, 'null')
+    # 【18号 2026-11-12】独立数据文件：供前端 no-store 轮询，绕开 GitHub Pages CDN 的 10 分钟缓存。
+    # 只有双店都读到真实数据才写；任一店失败则保留旧文件不动（严禁拿旧数据冒充新数据）。
+    if len(payload) == len(SOURCES):
+        pub = os.path.join(BASE, 'data.json')
+        pub_txt = json.dumps(payload, ensure_ascii=False, separators=(',', ':'))
+        with open(pub, 'w', encoding='utf-8') as f:
+            f.write(pub_txt)
+        print("✅ data.json 已更新（双店真实数据，供前端轮询）")
+    else:
+        print("⚠️ 双店数据不齐，data.json 保留上一版（不冒充新数据）")
     # 【18号 2026-10-23 加固】写前自检：锚点必须在 + 售票厅数据必须新鲜，任一不满足即非零退出（防静默停更）
     for name in ('EMBEDDED_DATA_LJC', 'EMBEDDED_DATA_HYC'):
         if f'const {name} = ' not in html:
@@ -86,15 +95,10 @@ def main():
             print(f"  ❌ 自检失败：server/data/{store}.json 已 {int(age)//60} 分钟未刷新（源数据读取失败或写入被跳过）")
             sys.exit(2)
     if not changed:
-        # 数据没变时仍要确保剥离态 + 售票厅文件在位（首次改造 / 中途回滚过）
-        stripped = ('const EMBEDDED_DATA_LJC = null;' in html
-                    and 'const EMBEDDED_DATA_HYC = null;' in html)
-        if stripped and os.path.exists(os.path.join(SERVER_DATA, 'ljc.json')) \
-                and os.path.exists(os.path.join(SERVER_DATA, 'hyc.json')):
-            print("⏭ 双店数据均无变化，空壳态就绪，不写 index.html")
-            return
+        print("⏭ 双店数据均无变化，index.html 内嵌态已是最新，不重写")
+        return
     with open(HTML, 'w', encoding='utf-8') as f:
         f.write(html)
-    print("✅ index.html 已更新（空壳：数据已剥离，由售票厅鉴权下发）")
+    print("✅ index.html 已更新（A 方案：数据内嵌，公网直接访问、不依赖隧道）")
 
 main()

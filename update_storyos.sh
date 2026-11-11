@@ -66,11 +66,12 @@ trap 'rm -rf "$LOCK_DIR" 2>/dev/null' EXIT
   echo "✅ 双店售票厅数据新鲜"
 
   echo "▶ 2. 检查变化并推送"
-  if git diff --quiet index.html; then
-    echo "⏭ index.html 无变化，跳过 push"
+  # 【18号 2026-11-12】index.html(内嵌) + data.json(前端轮询) 任一变化都要推，避免漏推
+  if git diff --quiet index.html data.json; then
+    echo "⏭ 数据无变化，跳过 push"
     exit 0
   fi
-  git add index.html
+  git add index.html data.json
   git commit -m "auto(storyos): 定时更新双店数据 $(date '+%Y-%m-%d %H:%M')" >/dev/null 2>&1
   echo "[push] git push origin main（90s 防挂起超时）"
   git push origin main > /tmp/storyos_push.log 2>&1 &

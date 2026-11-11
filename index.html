@@ -10,7 +10,7 @@
 <!-- 【18号 2026-10-25】售票厅隧道预连接：省 DNS+TLS 握手，首屏拉数快 200-500ms -->
 <link rel="preconnect" href="https://lijiacun-board.serveousercontent.com">
 <link rel="dns-prefetch" href="https://lijiacun-board.serveousercontent.com">
-<link rel="stylesheet" href="login.css?v=sb_20261112_1">
+<link rel="stylesheet" href="login.css?v=sb_20261112_2">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='19' font-size='19'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E">
 <style>
 :root{
@@ -2225,7 +2225,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261112_1';
+    var V = 'sb_20261112_2';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -4933,7 +4933,7 @@ function reopenInsightAction(){ const {task,date,st}=IA_CURRENT; st.status='doin
    - 回访记录中的手机号可与销售明细自动匹配成交
    ========================================================== */
 let IA_LAST_REMOTE_AT = Date.now();
-const IA_REFRESH_MS = 15*60*1000;
+const IA_REFRESH_MS = 2*60*1000;   /* 【18号 2026-11-12】A方案：数据上公网后轮询压到 2 分钟（数据没变不重绘，不闪屏） */
 let IA_NEXT_REFRESH_AT = Date.now()+IA_REFRESH_MS;
 const IA_SYS_KEY='ljc_ai_system_events_v18';
 function iaDataSignature(d){
@@ -5813,17 +5813,52 @@ window.addEventListener('hashchange', function(){
    数据加载（B 方案 2026-10-23）：数据已不在页面内嵌，
    统一从售票厅带票拉取；token 失效自动回登录门，隧道断有缓存降级
    ========================================================== */
-function loadRemote(silent){
-  // B 方案：数据在售票厅，刷新=带票重新拉取（token 失效会自动回登录门）
-  return fetchData().then(payload => {
-    if(!payload) return false;
-    applyPayload(MODE, payload);
-    $('#liveTag').textContent = '数据已更新';
-    // silent(自动刷新/视图切换) 不重绘，避免数据未变却每 15 分钟整页重渲染闪动；
-    // 仅用户手动「刷新经营数据」时重绘一次。
-    if(!silent){ render(true); toast('已载入最新看板数据'); }  /* 【18号 2026-10-21】刷新保持滚动位，不拽回顶 */
-    return true;
-  });
+/* 【18号 2026-11-12】A 方案：数据已随 index.html 内嵌 + 独立 data.json 上公网。
+   刷新 = 读公网 data.json（时间戳 + no-store，绕开 GitHub Pages 的 10 分钟 CDN 缓存），
+   不再依赖 serveo 隧道。数据签名没变就绝不重绘（防 2 分钟一次整页闪屏）。
+   失败只挂可见告警条、保留当前真实数据，绝不弹回登录门、绝不静默冒充最新。 */
+let LAST_PAYLOAD_SIG = null;
+function sbFreshLabel(payload){
+  /* 显示真实采集时刻，不用「已更新 / 实时」这类含糊字眼描述缓存数据 */
+  try{
+    const m = (payload && payload[CUR_STORE] && payload[CUR_STORE].meta) || {};
+    const d = String(m.date || '').slice(5);
+    const t = String(m.generatedAt || '').match(/\d{1,2}:\d{2}/);
+    if(d && t) return '数据 ' + d + ' ' + t[0];
+    if(m.fetchTime) return '数据 ' + (d ? d + ' ' : '') + m.fetchTime;
+  }catch(e){}
+  return '数据已载入';
+}
+function loadRemote(silent, quietFail){
+  const url = './data.json?t=' + Date.now();
+  return fetch(url, {cache:'no-store'})
+    .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+    .then(j => {
+      if(!j || !j.ljc || !j.hyc) throw new Error('数据格式不对');
+      const sig = safeSig(j);
+      const changed = (sig !== LAST_PAYLOAD_SIG);
+      LAST_PAYLOAD_SIG = sig;
+      hideOfflineBanner(); stopBgRetry(); sbFailSince = 0;
+      $('#liveTag').textContent = sbFreshLabel(j);
+      if(changed){
+        applyPayloadQuiet(CUR_STORE, j);      /* 免入场动画静默替换，保持当前门店与滚动位 */
+        if(!silent) toast('已载入最新看板数据');
+      }else if(!silent){
+        toast('数据已是最新');
+      }
+      return true;
+    })
+    .catch(() => {
+      /* 本轮拉取失败：保留当前已渲染的真实数据 + 显式标红告警，不冒充最新、不弹登录门 */
+      if(quietFail) return false;        /* 首屏那次静默：内嵌数据本就是最新，拉不到不打扰 */
+      showOfflineBanner(Date.now());
+      const ob = document.getElementById('offlineBar');
+      if(ob){ const sub = ob.querySelector('.sb-ob-sub');
+        if(sub) sub.textContent = '本轮拉取失败 · 当前显示上次成功载入的数据'; }
+      $('#liveTag').textContent = '数据非最新';
+      if(!silent) toast('本轮拉取失败，当前显示的是上次成功载入的数据');
+      return false;
+    });
 }
 
 /* ==========================================================
@@ -6187,10 +6222,15 @@ $('#actionMask').onclick = e => { if(e.target === $('#actionMask')) closeInsight
     PAYLOAD = { ljc: EMBEDDED_DATA_LJC, hyc: EMBEDDED_DATA_HYC };
     CUR_STORE = 'ljc';
     DATA = PAYLOAD.ljc;
+    LAST_PAYLOAD_SIG = safeSig(PAYLOAD);   /* 首屏已是最新内嵌数据，避免 2 分钟后无谓重绘 */
     var gate = document.getElementById('loginGate'); if(gate) gate.classList.add('hide');
     document.documentElement.classList.add('authed');
     setSwitcher(false);
     render();
+    /* 【18号 2026-11-12】首屏立刻静默拉一次公网 data.json：
+       index.html 自身可能被 CDN 缓存 10 分钟，但 data.json 带时间戳+no-store 永远是新的。
+       失败也不打扰（内嵌数据本就是本轮推送的真实数据）。 */
+    setTimeout(function(){ loadRemote(true, true); }, 300);
     return;   // 内嵌直看，不后台拉隧道（避免过期 token 弹门覆盖）
   }
   const ok = await loginRestore();

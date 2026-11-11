@@ -110,6 +110,11 @@ trap 'rm -rf "$LOCK_DIR" 2>/dev/null' EXIT
   echo "  ✅ 华阳城 data.json 已更新（未推 shophyc 仓库）"
 
   echo "✅ 双店拉数完成 · $(date '+%H:%M:%S')"
+
+  # 【18号 2026-11-12】拉完即推：不再干等 update 的 5 分钟档，数据落地立刻注入+推上线。
+  # update_storyos.sh 自带互斥锁与"无变化跳过"，本轮数据没变时零成本返回。
+  echo "▶ C. 拉完即推（消除等档 5 分钟）"
+  bash "$S/update_storyos.sh" >> "$LOG" 2>&1 || echo "⚠️ 拉完即推失败，由 5 分钟档兜底重试" >> "$LOG"
 } >> "$LOG" 2>&1
 RC=$?
 if [ "$RC" -ne 0 ]; then
