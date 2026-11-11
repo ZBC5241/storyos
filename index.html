@@ -10,7 +10,7 @@
 <!-- 【18号 2026-10-25】售票厅隧道预连接：省 DNS+TLS 握手，首屏拉数快 200-500ms -->
 <link rel="preconnect" href="https://lijiacun-board.serveousercontent.com">
 <link rel="dns-prefetch" href="https://lijiacun-board.serveousercontent.com">
-<link rel="stylesheet" href="login.css?v=sb_20261112_3">
+<link rel="stylesheet" href="login.css?v=sb_20261112_4">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='19' font-size='19'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E">
 <style>
 :root{
@@ -2225,7 +2225,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261112_3';
+    var V = 'sb_20261112_4';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -5851,10 +5851,56 @@ function sbStaleCheck(j){
     if(tag){ tag.style.color = ''; tag.style.fontWeight = ''; }
   }catch(e){}
 }
+/* 【18号 2026-11-12 实测】GitHub Pages / raw 都会忽略 ?t= 时间戳、按路径缓存
+   （Pages max-age=600、raw max-age=300，x-cache 恒 HIT），单靠时间戳破不了 CDN。
+   改用双通道：GitHub REST API(max-age=60，实时) + Pages data.json(无限流兜底)，
+   取采集时刻更新的那份；API 限流/失败时静默退回 Pages，绝不白屏。 */
+const SB_API_DATA = 'https://api.github.com/repos/ZBC5241/storyos/contents/data.json?ref=main';
+function sbPayloadTime(j){
+  try{ return new Date(String(j[CUR_STORE].meta.generatedAt || '').replace(' ', 'T')).getTime() || 0; }
+  catch(e){ return 0; }
+}
+function sbDecodeApi(j){
+  if(!j) return null;
+  if(j.content && j.encoding === 'base64'){          /* API 默认返回：base64 正文 */
+    try{
+      const bin = atob(j.content.replace(/\s/g, ''));
+      const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+      return JSON.parse(new TextDecoder().decode(bytes));
+    }catch(e){ return null; }
+  }
+  return (j.ljc && j.hyc) ? j : null;                /* 兼容 raw 媒体类型直出 JSON */
+}
+const SB_API_MIN_GAP = 4*60*1000;   /* 数据 5 分钟一档；API 节流到 4 分钟，多设备共用出口也不撞 60次/小时限流 */
+let SB_API_LAST_AT = 0, SB_API_LAST = null;
+function sbFetchPublic(){
+  const t = Date.now();
+  const get = function(url){
+    /* 5 秒超时：api.github.com 偶发慢/不可达时立刻放弃该通道，绝不拖住整轮刷新。
+       不带自定义请求头，走最稳的默认 JSON(base64)，不触发 CORS 预检。 */
+    const ctrl = new AbortController();
+    const tmr = setTimeout(function(){ ctrl.abort(); }, 5000);
+    return fetch(url, {cache:'no-store', signal: ctrl.signal})
+      .then(function(r){ clearTimeout(tmr); return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)); })
+      .catch(function(){ clearTimeout(tmr); return null; });
+  };
+  const pages = get('./data.json?t=' + t).then(j => (j && j.ljc && j.hyc) ? j : null);
+  const api = (SB_API_LAST && (t - SB_API_LAST_AT) < SB_API_MIN_GAP)
+    ? Promise.resolve(SB_API_LAST)                 /* 节流窗口内复用上次 API 结果，省限流 */
+    : get(SB_API_DATA + '&t=' + t).then(function(j){
+        const d = sbDecodeApi(j);
+        if(d && d.ljc && d.hyc){ SB_API_LAST = d; SB_API_LAST_AT = Date.now(); }
+        return d;
+      });
+  return Promise.all([pages, api]).then(function(a){
+    const ok = a.filter(x => x && x.ljc && x.hyc);
+    if(!ok.length) throw new Error('双通道均不可用');
+    ok.sort(function(x, y){ return sbPayloadTime(y) - sbPayloadTime(x); });
+    return ok[0];                                    /* 取真实采集时刻更新的那份 */
+  });
+}
 function loadRemote(silent, quietFail){
-  const url = './data.json?t=' + Date.now();
-  return fetch(url, {cache:'no-store'})
-    .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+  return sbFetchPublic()
     .then(j => {
       if(!j || !j.ljc || !j.hyc) throw new Error('数据格式不对');
       const sig = safeSig(j);
