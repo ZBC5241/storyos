@@ -10,7 +10,7 @@
 <!-- 【18号 2026-10-25】售票厅隧道预连接：省 DNS+TLS 握手，首屏拉数快 200-500ms -->
 <link rel="preconnect" href="https://lijiacun-board.serveousercontent.com">
 <link rel="dns-prefetch" href="https://lijiacun-board.serveousercontent.com">
-<link rel="stylesheet" href="login.css?v=sb_20261112_2">
+<link rel="stylesheet" href="login.css?v=sb_20261112_3">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='19' font-size='19'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E">
 <style>
 :root{
@@ -2225,7 +2225,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261112_2';
+    var V = 'sb_20261112_3';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -5829,6 +5829,28 @@ function sbFreshLabel(payload){
   }catch(e){}
   return '数据已载入';
 }
+/* 【18号 2026-11-12】停更检测：营业时段内若数据真实采集时刻已落后 >30 分钟，
+   页面显式标红告警，绝不把"链路停更的旧数据"伪装成"只是没新单"。 */
+function sbStaleCheck(j){
+  try{
+    const m = (j && j[CUR_STORE] && j[CUR_STORE].meta) || {};
+    const g = m.generatedAt || '';
+    const tag = $('#liveTag');
+    const ts = g ? new Date(String(g).replace(' ', 'T')).getTime() : NaN;
+    const hr = new Date().getHours();
+    const ageMin = isFinite(ts) ? (Date.now() - ts) / 60000 : 0;
+    if((hr >= 10 && hr < 23) && isFinite(ts) && ageMin > 30){
+      const hm = String(g).slice(5, 16);
+      if(tag){ tag.textContent = '⚠ 数据停更 · 显示 ' + hm + ' 旧数据'; tag.style.color = '#ef4444'; tag.style.fontWeight = '700'; }
+      showOfflineBanner(ts);
+      const ob = document.getElementById('offlineBar');
+      if(ob){ const sub = ob.querySelector('.sb-ob-sub');
+        if(sub) sub.textContent = '拉数链路疑似停更 · 当前是 ' + hm + ' 的旧数据，请联系店长排查'; }
+      return;
+    }
+    if(tag){ tag.style.color = ''; tag.style.fontWeight = ''; }
+  }catch(e){}
+}
 function loadRemote(silent, quietFail){
   const url = './data.json?t=' + Date.now();
   return fetch(url, {cache:'no-store'})
@@ -5840,6 +5862,7 @@ function loadRemote(silent, quietFail){
       LAST_PAYLOAD_SIG = sig;
       hideOfflineBanner(); stopBgRetry(); sbFailSince = 0;
       $('#liveTag').textContent = sbFreshLabel(j);
+      sbStaleCheck(j);                       /* 数据正常新鲜时清掉标红；停更时显式告警 */
       if(changed){
         applyPayloadQuiet(CUR_STORE, j);      /* 免入场动画静默替换，保持当前门店与滚动位 */
         if(!silent) toast('已载入最新看板数据');
