@@ -2225,7 +2225,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261112_9';
+    var V = 'sb_20261112_10';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -2540,6 +2540,49 @@ const API_BASE = new URLSearchParams(location.search).get('api')
       ? 'http://127.0.0.1:8802'
       : 'https://lijiacun-board.serveousercontent.com');
 const TOKEN_KEY = 'storyos_token_v1';
+
+/* ===== 【18号 2026-11-12】来访留痕 =====
+   登录仍是纯本地账号表校验，这里只额外发一条「谁、几点、从哪台设备来」；
+   不记密码、不参与登录判断。发不出去先存浏览器，通了自动补报。 */
+(function(){
+  var BASE=(location.hostname==='127.0.0.1'||location.hostname==='localhost')
+    ?'http://127.0.0.1:8802':'https://lijiacun-board.serveousercontent.com';
+  var Q='sb_audit_q_v1', DK='sb_dev_id_v1', OK='sb_audit_open_v1';
+  function dev(){try{var d=localStorage.getItem(DK);if(!d){d='D'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);localStorage.setItem(DK,d)}return d}catch(e){return 'D-unknown'}}
+  function ua(){var u=navigator.userAgent||'',m=/iPhone|iPad|Android|HarmonyOS|Huawei|Macintosh|Windows/i.exec(u);return (m?m[0]:'device')+' '+(screen.width||0)+'x'+(screen.height||0)}
+  function qget(){try{var a=JSON.parse(localStorage.getItem(Q)||'[]');return Array.isArray(a)?a:[]}catch(e){return []}}
+  function qset(a){try{localStorage.setItem(Q,JSON.stringify(a.slice(-60)))}catch(e){}}
+  var busy=false;
+  function flush(){
+    if(busy)return; var a=qget(); if(!a.length)return; busy=true;
+    var left=[],i=0;
+    function next(){
+      if(i>=a.length){qset(left);busy=false;return}
+      var item=a[i++],img=new Image(),done=false;
+      function fin(ok){if(done)return;done=true;if(!ok)left.push(item);next()}
+      img.onload=function(){fin(true)}; img.onerror=function(){fin(false)};
+      setTimeout(function(){fin(false)},6000);
+      try{img.src=BASE+'/api/audit?'+item+'&t='+Date.now()}catch(e){fin(false)}
+    }
+    next();
+  }
+  function send(sys,act,acct,store){
+    var parts=['sys='+encodeURIComponent(sys),'act='+encodeURIComponent(act),
+      'acct='+encodeURIComponent(acct||''),'store='+encodeURIComponent(store||''),
+      'dev='+encodeURIComponent(dev()),'ua='+encodeURIComponent(ua()),'ts='+Date.now()];
+    var a=qget();a.push(parts.join('&'));qset(a);flush();
+  }
+  function openOnce(sys,acct,store){
+    try{var k=OK+'|'+sys+'|'+dev(),last=parseInt(localStorage.getItem(k)||'0',10);
+      if(Date.now()-last<10*60*1000)return;
+      localStorage.setItem(k,String(Date.now()))}catch(e){}
+    send(sys,'open',acct,store);
+  }
+  window.SB_AUDIT={send:send,open:openOnce,flush:flush,dev:dev};
+  setTimeout(flush,1200);
+  window.addEventListener('online',flush);
+})();
+
 const CACHE_KEY = 'storyos_payload_cache';
 const SNAP_KEY  = 'storyos_snap_v1';   /* 【18号 2026-10-25】本机快照（按 store 分键，24h）——首屏秒开，隧道慢不再白屏 */
 let MODE = 'ljc';   /* ljc/hyc = 单店隔离；all = 店长合并账号(zbc)可切换两店 */
@@ -2631,11 +2674,13 @@ function doLogin(ev){
     if(SB_ACCOUNTS[t]){ uname = t; rec = SB_ACCOUNTS[t]; }
   }
   if(!rec || sbHash(p) !== sbPwdExpected(uname)){
+    try{ SB_AUDIT.send('board','fail',uname,''); }catch(e){}
     err.textContent = '账号或密码错误，请重新输入';
     pass.value = ''; pass.focus();
     return false;
   }
   const store = rec[0];
+  try{ localStorage.setItem('sb_audit_acct_v1', uname); SB_AUDIT.send('board','ok',uname,store); }catch(e){}
   err.textContent = '';
   try{ localStorage.removeItem(TOKEN_KEY); }catch(e){}   /* 清掉旧版服务器票据残留 */
   loginPersist(store);                 /* 先写登录态：后续后台刷新的门禁守卫才放行 */
@@ -2694,6 +2739,7 @@ function doChangePassword(ev){
 }
 
 function doLogout(){
+  try{ SB_AUDIT.send('board','logout', localStorage.getItem('sb_audit_acct_v1')||'', ''); }catch(e){}
   loginClear();                               // 清除记住的登录态，退出即需重新登录
   try{ localStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(CACHE_KEY); }catch(e){}
   hideOfflineBanner();
@@ -6400,10 +6446,11 @@ function sbEnterFromEmbedded(store){
     const st = sbAuthStore();
     if(!st) return;              /* 已退出/未登录：停在登录门 */
     sbEnterFromEmbedded(st);     /* 按上次登录的账号归属进对应门店（zbc=可切双店） */
+    try{ SB_AUDIT.open('board', localStorage.getItem('sb_audit_acct_v1')||'', st); }catch(e){}
     return;                      // 内嵌直看 + 静默刷公网数据文件，全程不经过隧道/售票厅
   }
   const ok = await loginRestore();
-  if(ok) render();
+  if(ok){ render(); try{ SB_AUDIT.open('board', localStorage.getItem('sb_audit_acct_v1')||'', ''); }catch(e){} }
 })();
 
 /* 首次加载：若有目标已 100% 达成，撒一次彩带 */

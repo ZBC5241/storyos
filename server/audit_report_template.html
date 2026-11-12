@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>谁来过 · 登录记录</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:24px 18px 60px;background:#f5f6fa;color:#1c1f28;font:14px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:1180px;margin:0 auto}
+h1{font-size:24px;margin:0 0 6px;font-weight:700}
+.sub{color:#6b7280;font-size:13px;margin-bottom:20px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+.card{background:#fff;border:1px solid #e6e8ef;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px #1c1f2808}
+.card b{display:block;font-size:26px;line-height:1.2;margin-bottom:4px}
+.card span{color:#6b7280;font-size:12px}
+.warn{background:#fff5f5;border:1px solid #f3c2c2;border-left:4px solid #dc2626;border-radius:12px;padding:14px 18px;margin-bottom:18px}
+.warn h3{margin:0 0 8px;font-size:15px;color:#b91c1c}
+.warn ul{margin:0;padding-left:20px;color:#7f1d1d}
+.warn li{margin:3px 0}
+.ok{background:#f0fdf4;border:1px solid #bbe7c6;border-left:4px solid #16a34a;border-radius:12px;padding:12px 18px;margin-bottom:18px;color:#166534}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.filters button{border:1px solid #d8dce6;background:#fff;color:#374151;padding:7px 15px;border-radius:20px;cursor:pointer;font-size:13px}
+.filters button.on{background:#4f46e5;color:#fff;border-color:#4f46e5}
+h2{font-size:16px;margin:26px 0 10px}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e6e8ef;border-radius:12px;overflow:hidden;font-size:13px}
+th,td{padding:9px 11px;text-align:left;border-bottom:1px solid #eef0f5;white-space:nowrap}
+th{background:#f8f9fc;color:#6b7280;font-weight:600;position:sticky;top:0}
+tr:last-child td{border-bottom:none}
+tbody tr:nth-child(even){background:#fafbfe}
+.scroll{max-height:560px;overflow:auto;border-radius:12px}
+.tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;background:#eef2ff;color:#4338ca}
+.tag.new{background:#ecfdf5;color:#047857}
+.tag.old{background:#f3f4f6;color:#6b7280}
+.tag.bad{background:#fef2f2;color:#b91c1c}
+.tag.late{background:#fffbeb;color:#b45309}
+.nameinput{border:1px solid #d8dce6;border-radius:7px;padding:4px 8px;font-size:12px;width:130px;background:#fff}
+.muted{color:#9ca3af}
+.foot{margin-top:26px;color:#9ca3af;font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>谁来过 · 登录记录</h1>
+  <div class="sub">本页生成时刻：<b id="gen"></b> ｜ 最后一条真实记录：<b id="last"></b> ｜ 共 <b id="total"></b> 条</div>
+
+  <div class="warn">
+    <h3>⚠️ 这些时间段本来就查不到，别当成「没人用」</h3>
+    <ul>
+      <li><b>库存查询</b>：在「新版留痕」开始之前，登录是网页自己认的，<b>一条记录都没有</b>，历史补不回来。</li>
+      <li><b>数据看板</b>：2026-11-12 21:44 改成不联网登录之后，到「新版留痕」开始之前，这段时间也是空的。</li>
+      <li>所有记录都<b>只能看到「哪个账号 + 什么时候」</b>：请求经隧道转进 Mac，真实来源地址一律是 127.0.0.1，看不到是谁的手机、在哪个地方。</li>
+      <li>标「延迟补报」的条目：真实发生时间按手机当时那一刻算，Mac 是后来才收到的，两个时间都列出来了。</li>
+    </ul>
+  </div>
+  <div class="ok">✅ 「新版留痕」从 2026-11-13 起生效：登录/输错密码/退出/打开页面都会记一笔，<b>不记密码</b>；登录本身仍不联网，断网照样能进。</div>
+
+  <div class="cards" id="cards"></div>
+
+  <h2>按人看</h2>
+  <table><thead><tr><th>账号</th><th>次数</th><th>最近一次</th><th>涉及系统</th></tr></thead><tbody id="byPerson"></tbody></table>
+
+  <h2>按设备看 <span class="muted" style="font-size:12px;font-weight:400">（右边可以填「这是谁的手机」，只存在你这台电脑的浏览器里）</span></h2>
+  <table><thead><tr><th>设备编号</th><th>备注（可改）</th><th>次数</th><th>用过的账号</th><th>最近一次</th><th>设备大概样子</th></tr></thead><tbody id="byDevice"></tbody></table>
+
+  <h2>每一笔明细</h2>
+  <div class="filters" id="filters"></div>
+  <div class="scroll"><table><thead><tr><th>真实发生时间</th><th>来源</th><th>系统</th><th>账号</th><th>动作</th><th>门店</th><th>设备</th><th>设备大概样子</th><th>备注</th></tr></thead><tbody id="detail"></tbody></table></div>
+
+  <div class="foot">18号 · 数据全部来自你 Mac 上的真实日志文件，未做任何补写或推测</div>
+</div>
+<script>
+var D = __DATA__;
+var SYS = D.sysCn || {};
+var NAMEKEY = 'sb_audit_device_names_v1';
+var names = {};
+try { names = JSON.parse(localStorage.getItem(NAMEKEY) || '{}') || {}; } catch (e) { names = {}; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+  return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function nm(dev) { return names[dev] || ''; }
+function save() { try { localStorage.setItem(NAMEKEY, JSON.stringify(names)); } catch (e) {} }
+function sysName(k) { return SYS[k] || k; }
+document.getElementById('gen').textContent = D.generatedAt;
+document.getElementById('last').textContent = D.lastAt;
+document.getElementById('total').textContent = D.rows.length;
+
+var cards = [
+  ['总记录', D.rows.length, '条'],
+  ['不同账号', D.accounts.length, '个'],
+  ['不同设备', D.devices.length, '台'],
+  ['新版留痕', D.rows.filter(function (r) { return r.src === '新版留痕'; }).length, '条'],
+  ['旧版联网登录', D.rows.filter(function (r) { return r.src === '旧版联网登录'; }).length, '条']
+];
+document.getElementById('cards').innerHTML = cards.map(function (c) {
+  return '<div class="card"><b>' + c[1] + '</b><span>' + c[0] + '（' + c[2] + '）</span></div>';
+}).join('');
+
+// 按人
+var pm = {};
+D.rows.forEach(function (r) {
+  var k = r.acct || '(空)';
+  if (!pm[k]) pm[k] = { n: 0, last: r.at, sys: {} };
+  pm[k].n++;
+  if (r.at > pm[k].last) pm[k].last = r.at;
+  pm[k].sys[sysName(r.sys)] = 1;
+});
+document.getElementById('byPerson').innerHTML = Object.keys(pm).sort(function (a, b) { return pm[b].n - pm[a].n; }).map(function (k) {
+  var v = pm[k];
+  return '<tr><td><b>' + esc(k) + '</b></td><td>' + v.n + '</td><td>' + esc(v.last) + '</td><td>' + esc(Object.keys(v.sys).join('、')) + '</td></tr>';
+}).join('') || '<tr><td colspan="4" class="muted">暂无记录</td></tr>';
+
+// 按设备
+var dm = {};
+D.rows.forEach(function (r) {
+  if (!r.dev) return;
+  if (!dm[r.dev]) dm[r.dev] = { n: 0, last: r.at, acct: {}, ua: r.ua };
+  dm[r.dev].n++;
+  if (r.at > dm[r.dev].last) dm[r.dev].last = r.at;
+  dm[r.dev].acct[r.acct] = 1;
+});
+document.getElementById('byDevice').innerHTML = Object.keys(dm).sort(function (a, b) { return dm[b].last > dm[a].last ? 1 : -1; }).map(function (d) {
+  var v = dm[d];
+  return '<tr><td><span class="tag new">' + esc(d.slice(0, 14)) + '</span></td>' +
+    '<td><input class="nameinput" data-dev="' + esc(d) + '" value="' + esc(nm(d)) + '" placeholder="填个名字"></td>' +
+    '<td>' + v.n + '</td><td>' + esc(Object.keys(v.acct).join('、')) + '</td><td>' + esc(v.last) + '</td><td class="muted">' + esc(v.ua) + '</td></tr>';
+}).join('') || '<tr><td colspan="6" class="muted">新版留痕开始后，有人用过就会出现在这里</td></tr>';
+
+document.getElementById('byDevice').addEventListener('input', function (e) {
+  var el = e.target;
+  if (!el.classList.contains('nameinput')) return;
+  names[el.dataset.dev] = el.value.trim();
+  save();
+  renderDetail();
+});
+
+// 明细 + 筛选
+var filter = 'all';
+var opts = [['all', '全部'], ['board', '数据看板'], ['board_old', '看板(旧版)'], ['inventory', '库存查询'], ['mms', '会员系统']];
+document.getElementById('filters').innerHTML = opts.map(function (o) {
+  return '<button data-k="' + o[0] + '" class="' + (o[0] === filter ? 'on' : '') + '">' + o[1] + '</button>';
+}).join('');
+document.getElementById('filters').addEventListener('click', function (e) {
+  if (e.target.tagName !== 'BUTTON') return;
+  filter = e.target.dataset.k;
+  Array.prototype.forEach.call(this.querySelectorAll('button'), function (b) { b.classList.toggle('on', b.dataset.k === filter); });
+  renderDetail();
+});
+function renderDetail() {
+  var rows = D.rows.filter(function (r) { return filter === 'all' || r.sys === filter; });
+  document.getElementById('detail').innerHTML = rows.map(function (r) {
+    var late = r.delay ? '<span class="tag late" title="Mac 收到时间 ' + esc(r.recv) + '">延迟补报 → ' + esc(r.recv) + '</span>' : '';
+    var dev = r.dev ? '<span class="tag new">' + esc(r.dev.slice(0, 14)) + '</span>' : '<span class="muted">—</span>';
+    var remark = r.dev && nm(r.dev) ? '<b>' + esc(nm(r.dev)) + '</b>' : '';
+    var actCls = (r.act.indexOf('错误') >= 0 || r.act.indexOf('频繁') >= 0) ? 'bad' : '';
+    return '<tr><td>' + esc(r.at) + ' ' + late + '</td>' +
+      '<td><span class="tag ' + (r.src === '新版留痕' ? 'new' : 'old') + '">' + esc(r.src) + '</span></td>' +
+      '<td>' + esc(sysName(r.sys)) + '</td><td><b>' + esc(r.acct) + '</b></td>' +
+      '<td><span class="tag ' + actCls + '">' + esc(r.act) + '</span></td>' +
+      '<td>' + esc(r.store || '—') + '</td><td>' + dev + '</td>' +
+      '<td class="muted">' + esc(r.ua) + '</td><td>' + remark + '</td></tr>';
+  }).join('') || '<tr><td colspan="9" class="muted">这个筛选下暂无记录</td></tr>';
+}
+renderDetail();
+</script>
+</body>
+</html>
