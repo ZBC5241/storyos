@@ -2225,7 +2225,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261112_7';
+    var V = 'sb_20261112_8';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -2368,8 +2368,8 @@ body:not([data-board="ops"]) .sec-h{margin-bottom:var(--sp-3)}
     var store = i > 0 ? raw.slice(0, i) : raw;
     var t = i > 0 ? parseInt(raw.slice(i + 1), 10) : 0;
     var ok = (store === 'ljc' || store === 'hyc' || store === 'all') && t && isFinite(t) && (Date.now() - t) <= __LOGIN_TTL_MS;
-    var tok = localStorage.getItem('storyos_token_v1') || '';   /* B 方案：真票在 token，本地时间戳只管首帧 */
-    if(ok && tok) document.documentElement.classList.add('authed');
+    /* 【18号 2026-11-12】本地账号表方案：登录态只在浏览器本地，不再要求服务器票据(token) */
+    if(ok) document.documentElement.classList.add('authed');
   }catch(e){}
 })();
 </script>
@@ -2388,18 +2388,13 @@ body:not([data-board="ops"]) .sec-h{margin-bottom:var(--sp-3)}
         <label class="v111-field"><span>密码</span><input id="v111Pass" name="password" type="password" autocomplete="current-password" required></label>
         <button class="v111-submit" type="submit">登录</button>
         <div class="v111-login-error" id="v111LoginError" role="alert"></div>
-        <!-- 【18号 2026-11-12】登录服务(serveo 隧道)不可达时的离线入口：
-             A 方案数据本就在公网，登录门只是界面门禁，不能因隧道抖动把人锁在外面。默认隐藏，仅网络失败时显示。 -->
-        <div class="v111-aux" id="sbOfflineEnter" style="display:none">
-          <button type="button" class="v111-forgot" onclick="sbOfflineView()">离线查看已发布数据</button>
-        </div>
         <div class="v111-aux">
           <button type="button" class="v111-forgot" onclick="sbShowPane('paneChange')">忘记密码</button>
         </div>
       </form>
     </div>
 
-    <!-- 面板二：忘记密码（自助改密：凭 账号+当前密码 核验后改本人密码，服务端 /api/change-password）【18号 2026-10-23】 -->
+    <!-- 面板二：忘记密码（本机改密：凭 账号+当前密码 核验后，只改这台设备浏览器里保存的口令）【18号 2026-11-12 本地化】 -->
     <div class="v111-pane" id="paneChange">
       <form class="v111-login-card" onsubmit="return doChangePassword(event)">
         <div class="v111-login-mark">改密</div>
@@ -2410,7 +2405,7 @@ body:not([data-board="ops"]) .sec-h{margin-bottom:var(--sp-3)}
         <label class="v111-field"><span>再输一遍新密码</span><input id="chgNew2" type="password" required placeholder="两次输入需一致"></label>
         <button class="v111-submit" type="submit">确认修改</button>
         <div class="v111-login-error" id="chgError" role="alert"></div>
-        <div class="v111-ok" id="chgOk" style="display:none">密码已修改，请用新密码登录</div>
+        <div class="v111-ok" id="chgOk" style="display:none">已在这台设备改好密码，换设备仍用原密码</div>
         <div class="v111-aux">
           <button type="button" class="v111-forgot" onclick="sbBackToLogin()">返回登录</button>
         </div>
