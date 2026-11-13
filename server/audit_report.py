@@ -96,30 +96,70 @@ def new_records():
 
 _build_lock = threading.Lock()
 
-def build():
-    """线程安全：服务端每收到一条纸条就刷新一次，多个请求并发也不互相写坏文件。"""
+
+def log_bytes():
+    return sum(os.path.getsize(p) for p in (SERVER_LOG, AUDIT_LOG) if os.path.exists(p))
+
+
+def build(window_days=30, person=None, out=None):
+    """线程安全：服务端每收到一条纸条就刷新一次，多个请求并发也不互相写坏文件。
+
+    【18号 2026-11-13】清单页默认只内嵌最近 30 天：
+    日志是无限追加的，若每条都把全部历史塞进 HTML，一年后页面会膨胀到几十 MB，
+    双击打不开、每记一笔还要全量重拼一次。窗口只影响「本页装多少」，
+    日志文件里一条都不删，--days / --all / --person 随时能把历史单独导出来。
+    """
     with _build_lock:
-        rows = old_records() + new_records()
-        rows.sort(key=lambda r: r['at'], reverse=True)
+        all_rows = old_records() + new_records()
+        # 同一秒有多笔时，让「后写进日志的」排在前面；sort 稳定，按人聚合取第一条才是真正最后一次
+        all_rows.reverse()
+        all_rows.sort(key=lambda r: r['at'], reverse=True)
+        cutoff = ''
+        if window_days:
+            from datetime import timedelta
+            cutoff = (datetime.now() - timedelta(days=window_days)).strftime('%Y-%m-%d %H:%M:%S')
+        rows = [r for r in all_rows if not cutoff or r['at'] == '-' or r['at'] >= cutoff]
+        if person:
+            rows = [r for r in rows if person in r['acct']]
         gen = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        last = rows[0]['at'] if rows else '（暂无记录）'
+        # 用「日志库」最后一条，不用本页最后一条：筛选/窗口下也不会让人误以为记录断了
+        last = all_rows[0]['at'] if all_rows else '（暂无记录）'
+        valid_ats = [r['at'] for r in all_rows if not r['at'].startswith('-')]
         devices = sorted({r['dev'] for r in rows if r['dev']})
         accounts = sorted({r['acct'] for r in rows if r['acct'] and r['acct'] != '(空)'})
         data = {
             'rows': rows, 'generatedAt': gen, 'lastAt': last,
             'devices': devices, 'accounts': accounts,
             'sysCn': SYS_CN,
+            'meta': {
+                'windowDays': window_days,
+                'totalAll': len(all_rows),
+                'shown': len(rows),
+                'earliestAll': min(valid_ats) if valid_ats else '（暂无）',
+                'logBytes': log_bytes(),
+                'logSize': '%.1f KB' % (log_bytes() / 1024.0),
+                'person': person or '',
+            },
         }
         tpl = open(os.path.join(BASE, 'audit_report_template.html'), encoding='utf-8').read()
         # 内联 JSON 里若出现 </script> 会提前闭合脚本块，统一转义 < 防注入
         payload = json.dumps(data, ensure_ascii=False).replace('<', '\\u003c')
-        out = tpl.replace('__DATA__', payload)
-        tmp = OUT + '.tmp.%d' % os.getpid()
+        html = tpl.replace('__DATA__', payload)
+        target = out or OUT
+        tmp = target + '.tmp.%d' % os.getpid()
         with open(tmp, 'w', encoding='utf-8') as f:
-            f.write(out)
-        os.replace(tmp, OUT)
+            f.write(html)
+        os.replace(tmp, target)
         return len(rows)
 
 
 if __name__ == '__main__':
-    print('✅ 已生成 %s | 记录 %d 条' % (OUT, build()))
+    import argparse
+    ap = argparse.ArgumentParser(description='生成「谁来过」清单页')
+    ap.add_argument('--days', type=int, default=30, help='本页只装最近 N 天（默认 30）')
+    ap.add_argument('--all', action='store_true', help='把日志库全部历史装进这一页')
+    ap.add_argument('--person', default='', help='只导某个人（姓名可只写一部分）')
+    ap.add_argument('--out', default=OUT, help='输出文件')
+    a = ap.parse_args()
+    n = build(window_days=0 if a.all else a.days, person=a.person or None, out=a.out)
+    print('✅ 已生成 %s | 本页 %d 条' % (a.out, n))

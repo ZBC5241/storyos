@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>谁来过 · 登录记录</title>
+<title>谁来过 · 登录与使用记录</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;padding:24px 18px 60px;background:#f5f6fa;color:#1c1f28;font:14px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
-.wrap{max-width:1180px;margin:0 auto}
+.wrap{max-width:1320px;margin:0 auto}
 h1{font-size:24px;margin:0 0 6px;font-weight:700}
-.sub{color:#6b7280;font-size:13px;margin-bottom:20px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+.sub{color:#6b7280;font-size:13px;margin-bottom:8px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0}
 .card{background:#fff;border:1px solid #e6e8ef;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px #1c1f2808}
 .card b{display:block;font-size:26px;line-height:1.2;margin-bottom:4px}
 .card span{color:#6b7280;font-size:12px}
@@ -19,9 +19,15 @@ h1{font-size:24px;margin:0 0 6px;font-weight:700}
 .warn ul{margin:0;padding-left:20px;color:#7f1d1d}
 .warn li{margin:3px 0}
 .ok{background:#f0fdf4;border:1px solid #bbe7c6;border-left:4px solid #16a34a;border-radius:12px;padding:12px 18px;margin-bottom:18px;color:#166534}
-.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .filters button{border:1px solid #d8dce6;background:#fff;color:#374151;padding:7px 15px;border-radius:20px;cursor:pointer;font-size:13px}
 .filters button.on{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.filters .sep{width:1px;height:22px;background:#d8dce6;margin:0 4px}
+.qinput{border:1px solid #d8dce6;border-radius:20px;padding:7px 14px;font-size:13px;width:240px;background:#fff}
+.pbtn{border:none;background:#eef2ff;color:#4338ca;border-radius:8px;padding:3px 10px;font-size:13px;font-weight:600;cursor:pointer}
+.pbtn:hover{background:#4f46e5;color:#fff}
+.now{color:#6b7280;font-size:13px;margin:0 0 10px}
+.clear{background:#fef2f2!important;color:#b91c1c!important;border-color:#f3c2c2!important}
 h2{font-size:16px;margin:26px 0 10px}
 table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e6e8ef;border-radius:12px;overflow:hidden;font-size:13px}
 th,td{padding:9px 11px;text-align:left;border-bottom:1px solid #eef0f5;white-space:nowrap}
@@ -41,8 +47,9 @@ tbody tr:nth-child(even){background:#fafbfe}
 </head>
 <body>
 <div class="wrap">
-  <h1>谁来过 · 登录记录</h1>
-  <div class="sub">本页生成时刻：<b id="gen"></b> ｜ 最后一条真实记录：<b id="last"></b> ｜ 共 <b id="total"></b> 条</div>
+  <h1>谁来过 · 登录与使用记录</h1>
+  <div class="sub">本页生成时刻：<b id="gen"></b> ｜ 日志库最后一条真实记录：<b id="last"></b> ｜ 本页 <b id="shown"></b> 条 ／ 日志库共 <b id="total"></b> 条 ｜ 日志文件体积 <b id="logsize"></b></div>
+  <div class="sub" id="scope"></div>
 
   <div class="warn">
     <h3>⚠️ 这些时间段本来就查不到，别当成「没人用」</h3>
@@ -52,26 +59,29 @@ tbody tr:nth-child(even){background:#fafbfe}
       <li>老记录<b>只有「哪个账号 + 什么时候」</b>；2026-11-13 起库存查询新增一笔「做了什么」（搜了什么词、查了哪个串码），只有新记录才有这一列。</li>
       <li>请求经隧道转进 Mac，真实来源地址一律是 127.0.0.1，<b>看不到是谁的手机、在哪个地方</b>；设备那列是浏览器给的随机编号，可在「按设备看」里自己备注。</li>
       <li>标「延迟补报」的条目：真实发生时间按手机当时那一刻算，Mac 是后来才收到的，两个时间都列出来了。</li>
+      <li><b>本页默认只装最近 30 天</b>：更早的记录一条没删，全在你这台 Mac 的日志文件里；想看哪段时间、哪个人，跟 18号 说一声就单独导一份。日志体积如实写在上面。</li>
     </ul>
   </div>
-  <div class="ok">✅ 「新版留痕」从 2026-11-13 起生效：登录/输错密码/退出/打开页面会记一笔；库存查询再加<b>搜了什么、查了哪个串码</b>。<b>不记密码、不记库存数值</b>；登录本身仍不联网，断网照样能进。</div>
+  <div class="ok">✅ 「新版留痕」从 2026-11-13 起生效：登录/输错密码/退出/打开页面会记一笔；库存查询再加<b>搜了什么、查了哪个串码</b>。<b>不记密码、不记库存数值</b>；登录本身仍不联网，断网照样能进。<b>点「按人看」里的姓名，就能看这个人进系统后都干了啥。</b></div>
 
   <div class="cards" id="cards"></div>
 
-  <h2>按人看</h2>
-  <table><thead><tr><th>账号</th><th>次数</th><th>最近一次</th><th>涉及系统</th></tr></thead><tbody id="byPerson"></tbody></table>
+  <h2>按人看 <span class="muted" style="font-size:12px;font-weight:400">（点姓名 → 下方明细只看这个人）</span></h2>
+  <table><thead><tr><th>账号</th><th>登录 / 退出</th><th>搜库存</th><th>查串码</th><th>总次数</th><th>最近一次做了什么</th><th>最近一次</th><th>涉及系统</th></tr></thead><tbody id="byPerson"></tbody></table>
 
   <h2>按设备看 <span class="muted" style="font-size:12px;font-weight:400">（右边可以填「这是谁的手机」，只存在你这台电脑的浏览器里）</span></h2>
   <table><thead><tr><th>设备编号</th><th>备注（可改）</th><th>次数</th><th>用过的账号</th><th>最近一次</th><th>设备大概样子</th></tr></thead><tbody id="byDevice"></tbody></table>
 
   <h2>每一笔明细</h2>
   <div class="filters" id="filters"></div>
+  <div class="now" id="now"></div>
   <div class="scroll"><table><thead><tr><th>真实发生时间</th><th>来源</th><th>系统</th><th>账号</th><th>动作</th><th>做了什么</th><th>门店</th><th>设备</th><th>设备大概样子</th><th>备注</th></tr></thead><tbody id="detail"></tbody></table></div>
 
   <div class="foot">18号 · 数据全部来自你 Mac 上的真实日志文件，未做任何补写或推测</div>
 </div>
 <script>
 var D = __DATA__;
+var M = D.meta || {};
 var SYS = D.sysCn || {};
 var NAMEKEY = 'sb_audit_device_names_v1';
 var names = {};
@@ -81,35 +91,55 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function
 function nm(dev) { return names[dev] || ''; }
 function save() { try { localStorage.setItem(NAMEKEY, JSON.stringify(names)); } catch (e) {} }
 function sysName(k) { return SYS[k] || k; }
+var BIZ = { '搜库存': 1, '查串码': 1, '看明细': 1, '导出': 1, '复制': 1 };
+function isBiz(r) { return !!BIZ[r.act] || !!r.info; }
+function short(s, n) { s = String(s || ''); return s.length > n ? s.slice(0, n) + '…' : s; }
+
 document.getElementById('gen').textContent = D.generatedAt;
 document.getElementById('last').textContent = D.lastAt;
-document.getElementById('total').textContent = D.rows.length;
+document.getElementById('shown').textContent = D.rows.length;
+document.getElementById('total').textContent = M.totalAll == null ? D.rows.length : M.totalAll;
+document.getElementById('logsize').textContent = M.logSize || '—';
+(function () {
+  var s = '本页只装最近 <b>' + (M.windowDays || 30) + ' 天</b>（日志库最早一条：' + esc(M.earliestAll || '—') + '）；更早的记录一条没删，都在你 Mac 的日志里。';
+  if (M.person) s = '<b>这是「' + esc(M.person) + '」的专属清单</b>；本页只含这个人最近 ' + (M.windowDays || 30) + ' 天的动作，日志库共 ' + (M.totalAll || 0) + ' 条。';
+  else if (!M.windowDays) s = '本页装了<b>日志库全部历史</b>（最早一条：' + esc(M.earliestAll || '—') + '）。';
+  document.getElementById('scope').innerHTML = s;
+})();
 
 var cards = [
-  ['总记录', D.rows.length, '条'],
+  ['本页记录', D.rows.length, '条'],
+  ['日志库总数', M.totalAll == null ? D.rows.length : M.totalAll, '条'],
   ['不同账号', D.accounts.length, '个'],
   ['不同设备', D.devices.length, '台'],
-  ['新版留痕', D.rows.filter(function (r) { return r.src === '新版留痕'; }).length, '条'],
-  ['旧版联网登录', D.rows.filter(function (r) { return r.src === '旧版联网登录'; }).length, '条'],
-  ['业务动作', D.rows.filter(function (r) { return r.info; }).length, '笔']
+  ['登录 / 退出', D.rows.filter(function (r) { return !isBiz(r); }).length, '笔'],
+  ['业务动作', D.rows.filter(isBiz).length, '笔']
 ];
 document.getElementById('cards').innerHTML = cards.map(function (c) {
   return '<div class="card"><b>' + c[1] + '</b><span>' + c[0] + '（' + c[2] + '）</span></div>';
 }).join('');
 
-// 按人
+// 按人：次数拆成「登录/退出、搜库存、查串码」，一眼看出这人进来干了啥
 var pm = {};
 D.rows.forEach(function (r) {
   var k = r.acct || '(空)';
-  if (!pm[k]) pm[k] = { n: 0, last: r.at, sys: {} };
-  pm[k].n++;
-  if (r.at > pm[k].last) pm[k].last = r.at;
-  pm[k].sys[sysName(r.sys)] = 1;
+  if (!pm[k]) pm[k] = { n: 0, login: 0, search: 0, trace: 0, last: r.at, lastAct: r.act, lastInfo: r.info, sys: {} };
+  var v = pm[k];
+  v.n++;
+  if (!isBiz(r)) v.login++;
+  else if (r.act === '搜库存') v.search++;
+  else if (r.act === '查串码') v.trace++;
+  if (r.at > v.last) { v.last = r.at; v.lastAct = r.act; v.lastInfo = r.info; }
+  v.sys[sysName(r.sys)] = 1;
 });
 document.getElementById('byPerson').innerHTML = Object.keys(pm).sort(function (a, b) { return pm[b].n - pm[a].n; }).map(function (k) {
   var v = pm[k];
-  return '<tr><td><b>' + esc(k) + '</b></td><td>' + v.n + '</td><td>' + esc(v.last) + '</td><td>' + esc(Object.keys(v.sys).join('、')) + '</td></tr>';
-}).join('') || '<tr><td colspan="4" class="muted">暂无记录</td></tr>';
+  var what = v.lastAct + (v.lastInfo ? ' · ' + v.lastInfo : '');
+  return '<tr><td><button class="pbtn" data-p="' + esc(k) + '">' + esc(k) + '</button></td>' +
+    '<td>' + v.login + '</td><td>' + v.search + '</td><td>' + v.trace + '</td><td><b>' + v.n + '</b></td>' +
+    '<td class="muted">' + esc(short(what, 42)) + '</td><td>' + esc(v.last) + '</td>' +
+    '<td>' + esc(Object.keys(v.sys).join('、')) + '</td></tr>';
+}).join('') || '<tr><td colspan="8" class="muted">暂无记录</td></tr>';
 
 // 按设备
 var dm = {};
@@ -135,20 +165,69 @@ document.getElementById('byDevice').addEventListener('input', function (e) {
   renderDetail();
 });
 
-// 明细 + 筛选
-var filter = 'all';
-var opts = [['all', '全部'], ['board', '数据看板'], ['board_old', '看板(旧版)'], ['inventory', '库存查询'], ['mms', '会员系统']];
-document.getElementById('filters').innerHTML = opts.map(function (o) {
-  return '<button data-k="' + o[0] + '" class="' + (o[0] === filter ? 'on' : '') + '">' + o[1] + '</button>';
-}).join('');
+// 明细筛选：系统 / 时间段 / 动作类型 / 某个人 / 关键词
+var st = { sys: 'all', range: 'all', kind: 'all', person: '', q: '' };
+var GROUPS = [
+  ['sys', [['all', '全部系统'], ['board', '数据看板'], ['board_old', '看板(旧版)'], ['inventory', '库存查询'], ['mms', '会员系统']]],
+  ['range', [['all', '本页全部'], ['today', '今天'], ['7', '近 7 天'], ['30', '近 30 天']]],
+  ['kind', [['all', '全部动作'], ['login', '登录 / 退出'], ['biz', '搜了 / 查了什么']]]
+];
+function drawFilters() {
+  var h = GROUPS.map(function (g, i) {
+    return (i ? '<span class="sep"></span>' : '') + g[1].map(function (o) {
+      return '<button data-g="' + g[0] + '" data-k="' + o[0] + '" class="' + (st[g[0]] === o[0] ? 'on' : '') + '">' + o[1] + '</button>';
+    }).join('');
+  }).join('');
+  h += '<span class="sep"></span><input class="qinput" id="q" type="search" value="' + esc(st.q) + '" placeholder="搜姓名 / 搜索词 / 串码 / 设备">';
+  if (st.person) h += '<button class="clear" data-clear="1">正在看：' + esc(st.person) + ' × 清除</button>';
+  document.getElementById('filters').innerHTML = h;
+}
 document.getElementById('filters').addEventListener('click', function (e) {
   if (e.target.tagName !== 'BUTTON') return;
-  filter = e.target.dataset.k;
-  Array.prototype.forEach.call(this.querySelectorAll('button'), function (b) { b.classList.toggle('on', b.dataset.k === filter); });
+  if (e.target.dataset.clear) { st.person = ''; }
+  else { var g = e.target.dataset.g, k = e.target.dataset.k; if (!g) return; st[g] = k; }
+  drawFilters();
   renderDetail();
 });
+document.getElementById('filters').addEventListener('input', function (e) {
+  if (e.target.id !== 'q') return;
+  st.q = e.target.value;
+  renderDetail();
+});
+document.getElementById('byPerson').addEventListener('click', function (e) {
+  if (!e.target.classList.contains('pbtn')) return;
+  st.person = e.target.dataset.p;
+  drawFilters();
+  renderDetail();
+  document.getElementById('now').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+function pad(x) { return (x < 10 ? '0' : '') + x; }
+function dayStr(d) {
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' +
+    pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+}
+function cutoff(range) {
+  if (range === 'today') { var d = new Date(); d.setHours(0, 0, 0, 0); return dayStr(d); }
+  if (range === '7' || range === '30') return dayStr(new Date(Date.now() - Number(range) * 86400000));
+  return '';
+}
 function renderDetail() {
-  var rows = D.rows.filter(function (r) { return filter === 'all' || r.sys === filter; });
+  var cut = cutoff(st.range), q = st.q.trim().toLowerCase();
+  var rows = D.rows.filter(function (r) {
+    if (st.sys !== 'all' && r.sys !== st.sys) return false;
+    if (st.kind === 'biz' && !isBiz(r)) return false;
+    if (st.kind === 'login' && isBiz(r)) return false;
+    if (st.person && r.acct !== st.person) return false;
+    if (cut && r.at !== '-' && r.at < cut) return false;
+    if (q) {
+      var hay = [r.at, r.src, sysName(r.sys), r.acct, r.act, r.info, r.store, r.dev, r.ua, nm(r.dev)].join(' ').toLowerCase();
+      if (hay.indexOf(q) < 0) return false;
+    }
+    return true;
+  });
+  document.getElementById('now').textContent = '当前显示 ' + rows.length + ' 条 / 本页共 ' + D.rows.length + ' 条' +
+    (st.person ? '（只看 ' + st.person + '）' : '');
   document.getElementById('detail').innerHTML = rows.map(function (r) {
     var late = r.delay ? '<span class="tag late" title="Mac 收到时间 ' + esc(r.recv) + '">延迟补报 → ' + esc(r.recv) + '</span>' : '';
     var dev = r.dev ? '<span class="tag new">' + esc(r.dev.slice(0, 14)) + '</span>' : '<span class="muted">—</span>';
@@ -163,6 +242,7 @@ function renderDetail() {
       '<td class="muted">' + esc(r.ua) + '</td><td>' + remark + '</td></tr>';
   }).join('') || '<tr><td colspan="10" class="muted">这个筛选下暂无记录</td></tr>';
 }
+drawFilters();
 renderDetail();
 </script>
 </body>
