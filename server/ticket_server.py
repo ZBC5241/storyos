@@ -34,7 +34,7 @@
 # 纯标准库，无第三方依赖；macOS python3 直接跑。
 import base64, gzip, hashlib, hmac, json, os, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, quote
 from http.cookies import SimpleCookie
 from html import escape as html_escape, unescape as html_unescape
 
@@ -174,6 +174,11 @@ def audit_clean(v, n):
     """防日志注入：去掉换行/制表，超长截断，不接受任何控制字符。"""
     s = str(v or '').replace('\r', ' ').replace('\n', ' ').replace('\t', ' ')
     return ''.join(ch if 32 <= ord(ch) < 127 or ord(ch) > 127 else ' ' for ch in s)[:n]
+
+def audit_info(v, n):
+    """业务动作详情必须重新 URL 编码：查询串解码后空格会回来，直接写会撑破日志的单字段格式。
+    先按字符数截断再编码，避免截断落在 %XX 中间导致清单页解码出乱码。"""
+    return quote(audit_clean(v, n), safe='')
 
 # ---------- 数据缓存（mtime 变化自动重载，管线更新无需重启服务） ----------
 class DataStore:
@@ -847,15 +852,18 @@ class Handler(BaseHTTPRequestHandler):
             def gv(k, n):
                 return audit_clean((q.get(k) or [''])[0], n)
             _sys, _act = gv('sys', 16), gv('act', 16)
-            if _sys in ('board', 'inventory') and _act in ('ok', 'fail', 'logout', 'open'):
+            # 【18号 2026-11-13】业务动作：搜索 / 串码追踪；info 只放关键词或串码，不记密码、不记库存数值
+            AUDIT_ACTS = ('ok', 'fail', 'logout', 'open', 'search', 'trace', 'detail', 'export', 'copy')
+            if _sys in ('board', 'inventory') and _act in AUDIT_ACTS:
                 # ts=浏览器端事件真实发生时刻；断网补报时行首时间是「收到时刻」，
                 # 两者必须分开存，绝不拿收到时刻冒充登录时刻。
                 try:
                     _at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(int(gv('ts', 20)) / 1000.0))
                 except Exception:
                     _at = '-'
-                audit_log('at=%s sys=%s act=%s acct=%s store=%s dev=%s ua=%s' % (
-                    _at, _sys, _act, gv('acct', 32), gv('store', 12), gv('dev', 32), gv('ua', 120)))
+                audit_log('at=%s sys=%s act=%s acct=%s store=%s info=%s dev=%s ua=%s' % (
+                    _at, _sys, _act, gv('acct', 32), gv('store', 12),
+                    audit_info(gv('info', 160), 160), gv('dev', 32), gv('ua', 120)))
                 # 每收到一条就顺手刷新「谁来过」清单页，晨哥双击本地文件永远是最新；
                 # 报告失败绝不能影响留痕本身，故独立吞异常。
                 try:

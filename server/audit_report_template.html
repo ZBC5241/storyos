@@ -49,11 +49,12 @@ tbody tr:nth-child(even){background:#fafbfe}
     <ul>
       <li><b>库存查询</b>：在「新版留痕」开始之前，登录是网页自己认的，<b>一条记录都没有</b>，历史补不回来。</li>
       <li><b>数据看板</b>：2026-11-12 21:44 改成不联网登录之后，到「新版留痕」开始之前，这段时间也是空的。</li>
-      <li>所有记录都<b>只能看到「哪个账号 + 什么时候」</b>：请求经隧道转进 Mac，真实来源地址一律是 127.0.0.1，看不到是谁的手机、在哪个地方。</li>
+      <li>老记录<b>只有「哪个账号 + 什么时候」</b>；2026-11-13 起库存查询新增一笔「做了什么」（搜了什么词、查了哪个串码），只有新记录才有这一列。</li>
+      <li>请求经隧道转进 Mac，真实来源地址一律是 127.0.0.1，<b>看不到是谁的手机、在哪个地方</b>；设备那列是浏览器给的随机编号，可在「按设备看」里自己备注。</li>
       <li>标「延迟补报」的条目：真实发生时间按手机当时那一刻算，Mac 是后来才收到的，两个时间都列出来了。</li>
     </ul>
   </div>
-  <div class="ok">✅ 「新版留痕」从 2026-11-13 起生效：登录/输错密码/退出/打开页面都会记一笔，<b>不记密码</b>；登录本身仍不联网，断网照样能进。</div>
+  <div class="ok">✅ 「新版留痕」从 2026-11-13 起生效：登录/输错密码/退出/打开页面会记一笔；库存查询再加<b>搜了什么、查了哪个串码</b>。<b>不记密码、不记库存数值</b>；登录本身仍不联网，断网照样能进。</div>
 
   <div class="cards" id="cards"></div>
 
@@ -65,7 +66,7 @@ tbody tr:nth-child(even){background:#fafbfe}
 
   <h2>每一笔明细</h2>
   <div class="filters" id="filters"></div>
-  <div class="scroll"><table><thead><tr><th>真实发生时间</th><th>来源</th><th>系统</th><th>账号</th><th>动作</th><th>门店</th><th>设备</th><th>设备大概样子</th><th>备注</th></tr></thead><tbody id="detail"></tbody></table></div>
+  <div class="scroll"><table><thead><tr><th>真实发生时间</th><th>来源</th><th>系统</th><th>账号</th><th>动作</th><th>做了什么</th><th>门店</th><th>设备</th><th>设备大概样子</th><th>备注</th></tr></thead><tbody id="detail"></tbody></table></div>
 
   <div class="foot">18号 · 数据全部来自你 Mac 上的真实日志文件，未做任何补写或推测</div>
 </div>
@@ -89,7 +90,8 @@ var cards = [
   ['不同账号', D.accounts.length, '个'],
   ['不同设备', D.devices.length, '台'],
   ['新版留痕', D.rows.filter(function (r) { return r.src === '新版留痕'; }).length, '条'],
-  ['旧版联网登录', D.rows.filter(function (r) { return r.src === '旧版联网登录'; }).length, '条']
+  ['旧版联网登录', D.rows.filter(function (r) { return r.src === '旧版联网登录'; }).length, '条'],
+  ['业务动作', D.rows.filter(function (r) { return r.info; }).length, '笔']
 ];
 document.getElementById('cards').innerHTML = cards.map(function (c) {
   return '<div class="card"><b>' + c[1] + '</b><span>' + c[0] + '（' + c[2] + '）</span></div>';
@@ -156,9 +158,10 @@ function renderDetail() {
       '<td><span class="tag ' + (r.src === '新版留痕' ? 'new' : 'old') + '">' + esc(r.src) + '</span></td>' +
       '<td>' + esc(sysName(r.sys)) + '</td><td><b>' + esc(r.acct) + '</b></td>' +
       '<td><span class="tag ' + actCls + '">' + esc(r.act) + '</span></td>' +
+      '<td class="muted">' + esc(r.info || '—') + '</td>' +
       '<td>' + esc(r.store || '—') + '</td><td>' + dev + '</td>' +
       '<td class="muted">' + esc(r.ua) + '</td><td>' + remark + '</td></tr>';
-  }).join('') || '<tr><td colspan="9" class="muted">这个筛选下暂无记录</td></tr>';
+  }).join('') || '<tr><td colspan="10" class="muted">这个筛选下暂无记录</td></tr>';
 }
 renderDetail();
 </script>

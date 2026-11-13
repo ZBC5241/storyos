@@ -13,6 +13,7 @@ import os
 import re
 import json
 import threading
+from urllib.parse import unquote
 from datetime import datetime
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -26,7 +27,9 @@ SYS_CN = {
 }
 ACT_CN = {
     'ok': '登录成功', 'fail': '账号或密码错误', 'logout': '退出登录',
-    'open': '打开页面', '200': '登录成功', '401': '账号或密码错误', '429': '尝试太频繁',
+    'open': '打开页面', 'search': '搜库存', 'trace': '查串码',
+    'detail': '看明细', 'export': '导出', 'copy': '复制',
+    '200': '登录成功', '401': '账号或密码错误', '429': '尝试太频繁',
 }
 
 
@@ -70,13 +73,14 @@ def new_records():
     pat = re.compile(
         r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+'
         r'at=(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+'
-        r'sys=(\S+)\s+act=(\S+)\s+acct=(\S*)\s+store=(\S*)\s+dev=(\S+)\s+ua=(.*)$')
+        r'sys=(\S+)\s+act=(\S+)\s+acct=(\S*)\s+store=(\S*)\s+'
+        r'(?:info=(\S*)\s+)?dev=(\S+)\s+ua=(.*)$')
     with open(AUDIT_LOG, encoding='utf-8', errors='replace') as f:
         for line in f:
             m = pat.match(line.strip())
             if not m:
                 continue
-            recv, at, sysx, act, acct, store, dev, ua = m.groups()
+            recv, at, sysx, act, acct, store, info, dev, ua = m.groups()
             a, b = parse_ts(at), parse_ts(recv)
             delayed = bool(a and b and abs((b - a).total_seconds()) > 60)
             out.append({
@@ -84,7 +88,7 @@ def new_records():
                 'sys': sysx if sysx in SYS_CN else 'board',
                 'act': ACT_CN.get(act, act),
                 'acct': acct or '(空)', 'store': store or '',
-                'dev': dev, 'ua': ua.strip(),
+                'dev': dev, 'ua': ua.strip(), 'info': unquote(info or ''),
                 'src': '新版留痕', 'delay': delayed,
             })
     return out
