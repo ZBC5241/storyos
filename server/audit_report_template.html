@@ -5,80 +5,306 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>谁来过 · 登录与使用记录</title>
 <style>
+:root{
+  --ink:#0f172a; --ink2:#475569; --ink3:#94a3b8;
+  --bg:#f4f6fb; --surface:#ffffff; --line:#e6eaf2; --line2:#f1f3f9;
+  --brand:#4f46e5; --brand-d:#3730a3; --brand-soft:#eef2ff;
+  --ok:#059669; --ok-soft:#ecfdf5;
+  --warn:#b45309; --warn-soft:#fffbeb;
+  --bad:#dc2626; --bad-soft:#fef2f2;
+  --info:#2563eb; --info-soft:#eff6ff;
+  --purple:#7c3aed; --purple-soft:#f5f3ff;
+  --radius:16px; --radius-s:10px;
+  --shadow:0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.05);
+  --shadow-hover:0 4px 10px rgba(15,23,42,.06), 0 16px 36px rgba(15,23,42,.09);
+  --fast:150ms ease; --normal:260ms ease;
+}
 *{box-sizing:border-box}
-body{margin:0;padding:24px 18px 60px;background:#f5f6fa;color:#1c1f28;font:14px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
-.wrap{max-width:1320px;margin:0 auto}
-h1{font-size:24px;margin:0 0 6px;font-weight:700}
-.sub{color:#6b7280;font-size:13px;margin-bottom:8px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0}
-.card{background:#fff;border:1px solid #e6e8ef;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px #1c1f2808}
-.card b{display:block;font-size:26px;line-height:1.2;margin-bottom:4px}
-.card span{color:#6b7280;font-size:12px}
-.warn{background:#fff5f5;border:1px solid #f3c2c2;border-left:4px solid #dc2626;border-radius:12px;padding:14px 18px;margin-bottom:18px}
-.warn h3{margin:0 0 8px;font-size:15px;color:#b91c1c}
-.warn ul{margin:0;padding-left:20px;color:#7f1d1d}
-.warn li{margin:3px 0}
-.ok{background:#f0fdf4;border:1px solid #bbe7c6;border-left:4px solid #16a34a;border-radius:12px;padding:12px 18px;margin-bottom:18px;color:#166534}
-.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
-.filters button{border:1px solid #d8dce6;background:#fff;color:#374151;padding:7px 15px;border-radius:20px;cursor:pointer;font-size:13px}
-.filters button.on{background:#4f46e5;color:#fff;border-color:#4f46e5}
-.filters .sep{width:1px;height:22px;background:#d8dce6;margin:0 4px}
-.qinput{border:1px solid #d8dce6;border-radius:20px;padding:7px 14px;font-size:13px;width:240px;background:#fff}
-.pbtn{border:none;background:#eef2ff;color:#4338ca;border-radius:8px;padding:3px 10px;font-size:13px;font-weight:600;cursor:pointer}
-.pbtn:hover{background:#4f46e5;color:#fff}
-.now{color:#6b7280;font-size:13px;margin:0 0 10px}
-.clear{background:#fef2f2!important;color:#b91c1c!important;border-color:#f3c2c2!important}
-h2{font-size:16px;margin:26px 0 10px}
-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e6e8ef;border-radius:12px;overflow:hidden;font-size:13px}
-th,td{padding:9px 11px;text-align:left;border-bottom:1px solid #eef0f5;white-space:nowrap}
-th{background:#f8f9fc;color:#6b7280;font-weight:600;position:sticky;top:0}
-tr:last-child td{border-bottom:none}
-tbody tr:nth-child(even){background:#fafbfe}
-.scroll{max-height:560px;overflow:auto;border-radius:12px}
-.tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;background:#eef2ff;color:#4338ca}
-.tag.new{background:#ecfdf5;color:#047857}
-.tag.old{background:#f3f4f6;color:#6b7280}
-.tag.bad{background:#fef2f2;color:#b91c1c}
-.tag.late{background:#fffbeb;color:#b45309}
-.nameinput{border:1px solid #d8dce6;border-radius:7px;padding:4px 8px;font-size:12px;width:130px;background:#fff}
-.muted{color:#9ca3af}
-.foot{margin-top:26px;color:#9ca3af;font-size:12px;text-align:center}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:6px}
+button,input{font-family:inherit}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* ---------- Hero ---------- */
+.hero{background:linear-gradient(135deg,#111827 0%,#1e293b 52%,#312e81 100%);color:#fff;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;width:520px;height:520px;right:-160px;top:-280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(129,140,248,.30),rgba(129,140,248,0) 68%);pointer-events:none}
+.hero::after{content:"";position:absolute;width:360px;height:360px;left:-140px;bottom:-240px;border-radius:50%;
+  background:radial-gradient(circle,rgba(56,189,248,.16),rgba(56,189,248,0) 70%);pointer-events:none}
+.hero-in{max-width:1320px;margin:0 auto;padding:26px 26px 22px;position:relative}
+.hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:13px}
+.mark{width:42px;height:42px;border-radius:13px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);
+  display:grid;place-items:center;font-weight:800;font-size:16px;letter-spacing:-.5px;color:#fff;flex:none}
+.brand h1{margin:0;font-size:22px;font-weight:700;letter-spacing:.2px;line-height:1.25}
+.brand p{margin:2px 0 0;font-size:12.5px;color:rgba(226,232,240,.72)}
+.privacy{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:rgba(226,232,240,.9);
+  background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);padding:7px 13px;border-radius:999px}
+.privacy .live{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 0 3px rgba(52,211,153,.18)}
+.hero-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:22px}
+.hm{background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.12);border-radius:13px;padding:12px 15px}
+.hm b{display:block;font-size:21px;font-weight:700;line-height:1.25;letter-spacing:.2px}
+.hm span{font-size:11.5px;color:rgba(226,232,240,.68)}
+
+/* ---------- Shell ---------- */
+.shell{max-width:1320px;margin:0 auto;padding:0 26px 64px}
+.fresh{display:flex;align-items:flex-start;gap:10px;margin:16px 0 0;padding:11px 15px;background:var(--surface);
+  border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:var(--radius-s);box-shadow:var(--shadow);
+  font-size:12.5px;color:var(--ink2);line-height:1.65}
+.fresh .live{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none;margin-top:6px;box-shadow:0 0 0 3px var(--ok-soft)}
+.fresh b{color:var(--ink);font-weight:600}
+.fresh-body{flex:1;min-width:0}
+.fresh-top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.fresh-top>span{color:var(--ink2)}
+.fresh-meta{margin-top:4px;font-size:11.8px;color:var(--ink3);line-height:1.7}
+.fresh-meta b{color:var(--ink2);font-weight:600}
+
+.tabs{display:flex;gap:4px;margin:20px 0 18px;padding:4px;background:#e9ecf4;border-radius:13px;width:fit-content;max-width:100%;overflow-x:auto}
+.tab{border:0;background:transparent;color:var(--ink2);padding:9px 18px;border-radius:10px;font-size:13.5px;font-weight:600;
+  cursor:pointer;white-space:nowrap;min-height:38px;transition:background var(--fast),color var(--fast),box-shadow var(--fast)}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--brand-d);box-shadow:0 1px 3px rgba(15,23,42,.10)}
+.tab .cnt{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;color:var(--ink3);background:#eef1f7;
+  padding:1px 6px;border-radius:999px}
+.tab[aria-selected="true"] .cnt{background:var(--brand-soft);color:var(--brand-d)}
+
+h2.sec{font-size:16px;margin:0 0 12px;font-weight:700;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+h2.sec .hint{font-size:12px;font-weight:400;color:var(--ink3)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px}
+.panel h3{margin:0 0 4px;font-size:14px;font-weight:700}
+.panel .cap{margin:0 0 14px;font-size:12px;color:var(--ink3)}
+
+/* ---------- KPI ---------- */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:17px 18px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--brand)}
+.kpi.k-ok::before{background:var(--ok)} .kpi.k-warn::before{background:var(--warn)} .kpi.k-info::before{background:var(--info)}
+.kpi .lab{font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:6px}
+.kpi .val{font-size:30px;font-weight:700;line-height:1.25;margin:5px 0 1px;letter-spacing:-.5px}
+.kpi .sub{font-size:11.5px;color:var(--ink3)}
+
+.grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}
+.grid2>.panel{margin-bottom:0}
+
+/* ---------- Timeline ---------- */
+.tl{list-style:none;margin:0;padding:0 0 0 4px;max-height:400px;overflow:auto}
+.tl-item{display:flex;gap:13px;position:relative;padding:0 0 15px}
+.tl-item:not(:last-child)::before{content:"";position:absolute;left:5px;top:13px;bottom:-2px;width:1px;background:var(--line)}
+.tl .dot{width:11px;height:11px;border-radius:50%;flex:none;margin-top:5px;background:var(--ink3);
+  box-shadow:0 0 0 3px #fff,0 0 0 4px var(--line)}
+.tl .dot.s-ok{background:var(--ok)} .tl .dot.s-bad{background:var(--bad)}
+.tl .dot.s-info{background:var(--info)} .tl .dot.s-purple{background:var(--purple)}
+.tl .dot.s-warn{background:var(--warn)}
+.tl-main{min-width:0;flex:1}
+.tl-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tl-top b{font-size:13px;font-weight:650}
+.tl-top time{font-size:11.5px;color:var(--ink3);margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tl-sub{font-size:12px;color:var(--ink2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tl-empty{color:var(--ink3);font-size:13px;padding:18px 0}
+
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:650;padding:2px 9px;border-radius:999px;
+  background:#f1f5f9;color:var(--ink2);white-space:nowrap}
+.pill.s-ok{background:var(--ok-soft);color:var(--ok)}
+.pill.s-bad{background:var(--bad-soft);color:var(--bad)}
+.pill.s-info{background:var(--info-soft);color:var(--info)}
+.pill.s-purple{background:var(--purple-soft);color:var(--purple)}
+.pill.s-warn{background:var(--warn-soft);color:var(--warn)}
+.pill.s-mute{background:#f1f5f9;color:var(--ink2)}
+
+/* ---------- Rank ---------- */
+.rank{list-style:none;margin:0;padding:0}
+.rank li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line2)}
+.rank li:last-child{border-bottom:0}
+.rank .nm{width:76px;flex:none;font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank .bar{flex:1;height:7px;border-radius:99px;background:#eef1f7;overflow:hidden}
+.rank .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#6366f1,#4f46e5)}
+.rank .v{width:34px;text-align:right;font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums}
+
+/* ---------- 说明折叠 ---------- */
+details.notes{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px}
+details.notes summary{cursor:pointer;padding:14px 18px;font-size:13px;font-weight:650;display:flex;align-items:center;gap:9px;list-style:none}
+details.notes summary::-webkit-details-marker{display:none}
+details.notes summary::after{content:"展开";margin-left:auto;font-size:11.5px;color:var(--ink3);font-weight:500}
+details.notes[open] summary::after{content:"收起"}
+details.notes .notes-body{padding:0 18px 16px;border-top:1px solid var(--line2)}
+.warnbox{background:var(--bad-soft);border:1px solid #fecaca;border-radius:var(--radius-s);padding:12px 15px;margin-top:14px}
+.warnbox h4{margin:0 0 7px;font-size:13px;color:#b91c1c}
+.warnbox ul{margin:0;padding-left:19px;color:#991b1b;font-size:12.5px;line-height:1.85}
+.okbox{background:var(--ok-soft);border:1px solid #a7f3d0;border-radius:var(--radius-s);padding:11px 15px;margin-top:10px;
+  color:#065f46;font-size:12.5px;line-height:1.8}
+
+/* ---------- 人物卡 ---------- */
+.people{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:15px 16px;cursor:pointer;transition:transform var(--normal),box-shadow var(--normal),border-color var(--normal);text-align:left;width:100%}
+.pcard:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);border-color:#c7d2fe}
+.pcard:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.pc-head{display:flex;align-items:center;gap:10px}
+.avatar{width:36px;height:36px;border-radius:11px;background:var(--brand-soft);color:var(--brand-d);
+  display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.pc-head .who{min-width:0}
+.pc-head .who b{display:block;font-size:14px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc-head .who span{font-size:11.5px;color:var(--ink3)}
+.pc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:13px 0 11px;padding:10px 0;
+  border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.pc-stats div{text-align:center}
+.pc-stats b{display:block;font-size:17px;font-weight:700;line-height:1.3}
+.pc-stats span{font-size:11px;color:var(--ink3)}
+.pc-last{font-size:12px;color:var(--ink2);min-height:36px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pc-last em{font-style:normal;color:var(--ink3)}
+.pc-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:11.5px;color:var(--brand);font-weight:600}
+.pc-foot .dev{color:var(--ink3);font-weight:400;max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- 表格 ---------- */
+.tblwrap{overflow:auto;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+th,td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--line2);white-space:nowrap}
+th{background:#fafbfe;color:var(--ink2);font-weight:650;font-size:12px;position:sticky;top:0;z-index:1;
+  border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:#f8faff}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.muted{color:var(--ink3)}
+.tblwrap .empty{text-align:center;color:var(--ink3);padding:30px 0}
+.nameinput{border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12px;width:130px;background:#fff;color:var(--ink)}
+.nameinput:focus{border-color:var(--brand);outline:none;box-shadow:0 0 0 3px var(--brand-soft)}
+.tlink{border:0;background:transparent;color:var(--brand);font-weight:650;font-size:13px;cursor:pointer;padding:2px 4px;border-radius:6px}
+.tlink:hover{background:var(--brand-soft)}
+
+/* ---------- 筛选工具条 ---------- */
+.toolbar{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:14px}
+.frow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:9px}
+.frow:last-child{margin-bottom:0}
+.flabel{font-size:11.5px;color:var(--ink3);width:52px;flex:none;font-weight:600}
+.fbtn{border:1px solid var(--line);background:#fff;color:var(--ink2);padding:6px 13px;border-radius:999px;
+  cursor:pointer;font-size:12.5px;min-height:32px;transition:background var(--fast),color var(--fast),border-color var(--fast)}
+.fbtn:hover{border-color:#c7d2fe;color:var(--brand-d)}
+.fbtn.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.qinput{border:1px solid var(--line);border-radius:999px;padding:7px 15px;font-size:12.5px;width:260px;background:#fff;color:var(--ink)}
+.qinput:focus{border-color:var(--brand);outline:none;box-shadow:0 0 0 3px var(--brand-soft)}
+.clear{background:var(--bad-soft);color:var(--bad);border-color:#fecaca}
+.clear:hover{background:#fee2e2;color:var(--bad)}
+.now{font-size:12.5px;color:var(--ink2);margin:10px 2px 0;font-variant-numeric:tabular-nums}
+
+.foot{margin-top:26px;color:var(--ink3);font-size:12px;text-align:center;line-height:1.8}
+
+@media(max-width:900px){
+  .grid2{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hero-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:640px){
+  .hero-in{padding:20px 16px 18px}
+  .shell{padding:0 14px 48px}
+  .brand h1{font-size:19px}
+  .hero-metrics{gap:8px;margin-top:18px}
+  .hm{padding:10px 12px}.hm b{font-size:18px}
+  .tabs{width:100%}
+  .tab{flex:1;padding:9px 8px;font-size:12.5px}
+  h2.sec .hint{flex-basis:100%;font-size:11.5px;line-height:1.5}
+  .kpis{gap:9px}.kpi{padding:14px}.kpi .val{font-size:25px}
+  .people{grid-template-columns:1fr}
+  .panel{padding:15px}
+  .frow{gap:6px}.flabel{width:100%}.qinput{width:100%}
+  .fbtn{padding:6px 11px;font-size:12px}
+  .fresh{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>谁来过 · 登录与使用记录</h1>
-  <div class="sub">本页生成时刻：<b id="gen"></b> ｜ 日志库最后一条真实记录：<b id="last"></b> ｜ 本页 <b id="shown"></b> 条 ／ 日志库共 <b id="total"></b> 条 ｜ 日志文件体积 <b id="logsize"></b></div>
-  <div class="sub" id="scope"></div>
 
-  <div class="warn">
-    <h3>⚠️ 这些时间段本来就查不到，别当成「没人用」</h3>
-    <ul>
-      <li><b>库存查询</b>：在「新版留痕」开始之前，登录是网页自己认的，<b>一条记录都没有</b>，历史补不回来。</li>
-      <li><b>数据看板</b>：2026-11-12 21:44 改成不联网登录之后，到「新版留痕」开始之前，这段时间也是空的。</li>
-      <li>老记录<b>只有「哪个账号 + 什么时候」</b>；2026-11-13 起库存查询新增一笔「做了什么」（搜了什么词、查了哪个串码），只有新记录才有这一列。</li>
-      <li>请求经隧道转进 Mac，真实来源地址一律是 127.0.0.1，<b>看不到是谁的手机、在哪个地方</b>；设备那列是浏览器给的随机编号，可在「按设备看」里自己备注。</li>
-      <li>标「延迟补报」的条目：真实发生时间按手机当时那一刻算，Mac 是后来才收到的，两个时间都列出来了。</li>
-      <li><b>本页默认只装最近 30 天</b>：更早的记录一条没删，全在你这台 Mac 的日志文件里；想看哪段时间、哪个人，跟 18号 说一声就单独导一份。日志体积如实写在上面。</li>
-    </ul>
+<header class="hero">
+  <div class="hero-in">
+    <div class="hero-top">
+      <div class="brand">
+        <span class="mark">18</span>
+        <div><h1 id="heroTitle">谁来过</h1><p id="heroSub">登录与使用记录 · 本机账本</p></div>
+      </div>
+      <div class="privacy"><span class="live"></span>仅你本人可见</div>
+    </div>
+    <div class="hero-metrics">
+      <div class="hm"><b class="num" id="mTotal">—</b><span>日志库总记录</span></div>
+      <div class="hm"><b class="num" id="mShown">—</b><span>本页记录</span></div>
+      <div class="hm"><b class="num" id="mSize">—</b><span>日志文件体积</span></div>
+      <div class="hm"><b class="num" id="mWindow">—</b><span>本页覆盖天数</span></div>
+    </div>
   </div>
-  <div class="ok">✅ 「新版留痕」从 2026-11-13 起生效：登录/输错密码/退出/打开页面会记一笔；库存查询再加<b>搜了什么、查了哪个串码</b>。<b>不记密码、不记库存数值</b>；登录本身仍不联网，断网照样能进。<b>点「按人看」里的姓名，就能看这个人进系统后都干了啥。</b></div>
+</header>
 
-  <div class="cards" id="cards"></div>
+<div class="shell">
+  <div class="fresh"><span class="live"></span><div class="fresh-body" id="freshText"></div></div>
 
-  <h2>按人看 <span class="muted" style="font-size:12px;font-weight:400">（点姓名 → 下方明细只看这个人）</span></h2>
-  <table><thead><tr><th>账号</th><th>登录 / 退出</th><th>搜库存</th><th>查串码</th><th>总次数</th><th>最近一次做了什么</th><th>最近一次</th><th>涉及系统</th></tr></thead><tbody id="byPerson"></tbody></table>
+  <nav class="tabs" role="tablist" aria-label="视图切换" id="tabs"></nav>
 
-  <h2>按设备看 <span class="muted" style="font-size:12px;font-weight:400">（右边可以填「这是谁的手机」，只存在你这台电脑的浏览器里）</span></h2>
-  <table><thead><tr><th>设备编号</th><th>备注（可改）</th><th>次数</th><th>用过的账号</th><th>最近一次</th><th>设备大概样子</th></tr></thead><tbody id="byDevice"></tbody></table>
+  <!-- 概览 -->
+  <section class="panel-view" id="p-overview" data-k="overview" role="tabpanel" aria-labelledby="t-overview">
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2">
+      <div class="panel">
+        <h3>最近动态</h3>
+        <p class="cap">按真实发生时间倒序，最新 12 笔</p>
+        <ul class="tl" id="timeline"></ul>
+      </div>
+      <div class="panel">
+        <h3>谁来得最多</h3>
+        <p class="cap">按记录笔数排，点姓名可看这个人的全部动作</p>
+        <ul class="rank" id="rank"></ul>
+      </div>
+    </div>
+    <details class="notes" style="margin-top:16px">
+      <summary>⚠️ 口径说明：有几段时间本来就查不到，别当成「没人用」</summary>
+      <div class="notes-body">
+        <div class="warnbox">
+          <h4>这些时间段查不到</h4>
+          <ul>
+            <li><b>库存查询</b>：在「新版留痕」开始之前，登录是网页自己认的，<b>一条记录都没有</b>，历史补不回来。</li>
+            <li><b>数据看板</b>：2026-11-12 21:44 改成不联网登录之后，到「新版留痕」开始之前，这段时间也是空的。</li>
+            <li>老记录<b>只有「哪个账号 + 什么时候」</b>；2026-11-13 起库存查询新增一笔「做了什么」（搜了什么词、查了哪个串码），只有新记录才有这一列。</li>
+            <li>请求经隧道转进 Mac，真实来源地址一律是 127.0.0.1，<b>看不到是谁的手机、在哪个地方</b>；设备编号可在「按设备」里自己备注。</li>
+            <li>标「延迟补报」的条目：真实发生时间按手机当时那一刻算，Mac 是后来才收到的，两个时间都列出来了。</li>
+            <li><b>本页默认只装最近 30 天</b>：更早的记录一条没删，全在你这台 Mac 的日志文件里；想看哪段时间、哪个人，跟 18号 说一声就单独导一份。</li>
+          </ul>
+        </div>
+        <div class="okbox">✅ 「新版留痕」从 2026-11-13 起生效：登录 / 输错密码 / 退出 / 打开页面会记一笔；库存查询再加<b>搜了什么、查了哪个串码</b>。<b>不记密码、不记库存数值</b>；登录本身仍不联网，断网照样能进。</div>
+      </div>
+    </details>
+  </section>
 
-  <h2>每一笔明细</h2>
-  <div class="filters" id="filters"></div>
-  <div class="now" id="now"></div>
-  <div class="scroll"><table><thead><tr><th>真实发生时间</th><th>来源</th><th>系统</th><th>账号</th><th>动作</th><th>做了什么</th><th>门店</th><th>设备</th><th>设备大概样子</th><th>备注</th></tr></thead><tbody id="detail"></tbody></table></div>
+  <!-- 按人 -->
+  <section class="panel-view" id="p-people" data-k="people" role="tabpanel" aria-labelledby="t-people" hidden>
+    <h2 class="sec">按人看 <span class="hint">点任意一张卡片 → 直接看这个人进系统后都干了啥</span></h2>
+    <div class="people" id="people"></div>
+  </section>
 
-  <div class="foot">18号 · 数据全部来自你 Mac 上的真实日志文件，未做任何补写或推测</div>
+  <!-- 按设备 -->
+  <section class="panel-view" id="p-devices" data-k="devices" role="tabpanel" aria-labelledby="t-devices" hidden>
+    <h2 class="sec">按设备看 <span class="hint">备注只存在你这台电脑的浏览器里，别人看不到</span></h2>
+    <div class="tblwrap"><table>
+      <thead><tr><th>设备编号</th><th>备注（可改）</th><th class="num">次数</th><th>用过的账号</th><th>最近一次</th><th>设备大概样子</th></tr></thead>
+      <tbody id="byDevice"></tbody>
+    </table></div>
+  </section>
+
+  <!-- 明细 -->
+  <section class="panel-view" id="p-detail" data-k="detail" role="tabpanel" aria-labelledby="t-detail" hidden>
+    <h2 class="sec">每一笔明细 <span class="hint">全部字段都来自本机真实日志</span></h2>
+    <div class="toolbar" id="toolbar"></div>
+    <div class="now" id="now"></div>
+    <div class="tblwrap"><table>
+      <thead><tr><th>真实发生时间</th><th>来源</th><th>系统</th><th>账号</th><th>动作</th><th>做了什么</th><th>门店</th><th>设备</th><th>设备大概样子</th><th>备注</th></tr></thead>
+      <tbody id="detail"></tbody>
+    </table></div>
+  </section>
+
+  <div class="foot">18号 · 数据全部来自你 Mac 上的真实日志文件，未做任何补写或推测<br>页面不联网、不上传、不推群，只有你本人能看到</div>
 </div>
+
 <script>
 var D = __DATA__;
 var M = D.meta || {};
@@ -86,62 +312,113 @@ var SYS = D.sysCn || {};
 var NAMEKEY = 'sb_audit_device_names_v1';
 var names = {};
 try { names = JSON.parse(localStorage.getItem(NAMEKEY) || '{}') || {}; } catch (e) { names = {}; }
+var TODAY = (D.generatedAt || '').slice(0, 10);
+
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
   return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 function nm(dev) { return names[dev] || ''; }
-function save() { try { localStorage.setItem(NAMEKEY, JSON.stringify(names)); } catch (e) {} }
+function saveNames() { try { localStorage.setItem(NAMEKEY, JSON.stringify(names)); } catch (e) {} }
 function sysName(k) { return SYS[k] || k; }
-var BIZ = { '搜库存': 1, '查串码': 1, '看明细': 1, '导出': 1, '复制': 1 };
-function isBiz(r) { return !!BIZ[r.act] || !!r.info; }
 function short(s, n) { s = String(s || ''); return s.length > n ? s.slice(0, n) + '…' : s; }
+function num(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 
-document.getElementById('gen').textContent = D.generatedAt;
-document.getElementById('last').textContent = D.lastAt;
-document.getElementById('shown').textContent = D.rows.length;
-document.getElementById('total').textContent = M.totalAll == null ? D.rows.length : M.totalAll;
-document.getElementById('logsize').textContent = M.logSize || '—';
-(function () {
-  var s = '本页只装最近 <b>' + (M.windowDays || 30) + ' 天</b>（日志库最早一条：' + esc(M.earliestAll || '—') + '）；更早的记录一条没删，都在你 Mac 的日志里。';
-  if (M.person) s = '<b>这是「' + esc(M.person) + '」的专属清单</b>；本页只含这个人最近 ' + (M.windowDays || 30) + ' 天的动作，日志库共 ' + (M.totalAll || 0) + ' 条。';
-  else if (!M.windowDays) s = '本页装了<b>日志库全部历史</b>（最早一条：' + esc(M.earliestAll || '—') + '）。';
-  document.getElementById('scope').innerHTML = s;
-})();
+var BIZ = { '搜库存': 1, '查串码': 1, '看明细': 1, '导出': 1, '复制': 1 };
+var STYLE = {
+  '登录成功': 'ok', '账号或密码错误': 'bad', '尝试太频繁': 'bad',
+  '退出登录': 'mute', '打开页面': 'mute',
+  '搜库存': 'info', '看明细': 'info', '查串码': 'purple', '导出': 'warn', '复制': 'warn'
+};
+function isBiz(r) { return !!BIZ[r.act] || !!r.info; }
+function styleOf(r) { return STYLE[r.act] || (isBiz(r) ? 'info' : 'mute'); }
 
-var cards = [
-  ['本页记录', D.rows.length, '条'],
-  ['日志库总数', M.totalAll == null ? D.rows.length : M.totalAll, '条'],
-  ['不同账号', D.accounts.length, '个'],
-  ['不同设备', D.devices.length, '台'],
-  ['登录 / 退出', D.rows.filter(function (r) { return !isBiz(r); }).length, '笔'],
-  ['业务动作', D.rows.filter(isBiz).length, '笔']
-];
-document.getElementById('cards').innerHTML = cards.map(function (c) {
-  return '<div class="card"><b>' + c[1] + '</b><span>' + c[0] + '（' + c[2] + '）</span></div>';
-}).join('');
+/* ---------- 顶部 ---------- */
+if (M.person) {
+  document.getElementById('heroTitle').textContent = M.person + ' · 使用记录';
+  document.getElementById('heroSub').textContent = '专属清单 · 本机账本 · 仅你本人可见';
+  document.title = M.person + ' · 使用记录';
+}
+document.getElementById('mTotal').textContent = num(M.totalAll == null ? D.rows.length : M.totalAll);
+document.getElementById('mShown').textContent = num(D.rows.length);
+document.getElementById('mSize').textContent = M.logSize || '—';
+document.getElementById('mWindow').textContent = M.windowDays ? M.windowDays + ' 天' : '全部';
+document.getElementById('freshText').innerHTML =
+  '<div class="fresh-top"><b>数据来自本机真实日志</b><span>本页生成：<b>' + esc(D.generatedAt) + '</b></span></div>' +
+  '<div class="fresh-meta">日志库最后一条真实记录：<b>' + esc(D.lastAt) + '</b> · 最早一条：<b>' + esc(M.earliestAll || '—') + '</b> · ' +
+  (M.windowDays
+    ? '本页只装最近 ' + M.windowDays + ' 天，更早的记录一条没删，都在日志里，说一声单独导一份。'
+    : '本页装了日志库全部历史。') + '</div>';
 
-// 按人：次数拆成「登录/退出、搜库存、查串码」，一眼看出这人进来干了啥
+/* ---------- 聚合 ---------- */
 var pm = {};
 D.rows.forEach(function (r) {
   var k = r.acct || '(空)';
-  if (!pm[k]) pm[k] = { n: 0, login: 0, search: 0, trace: 0, last: r.at, lastAct: r.act, lastInfo: r.info, sys: {} };
+  if (!pm[k]) pm[k] = { name: k, n: 0, login: 0, search: 0, trace: 0, biz: 0,
+    last: r.at, lastAct: r.act, lastInfo: r.info, sys: {}, devs: {} };
   var v = pm[k];
   v.n++;
-  if (!isBiz(r)) v.login++;
-  else if (r.act === '搜库存') v.search++;
-  else if (r.act === '查串码') v.trace++;
+  if (isBiz(r)) {
+    v.biz++;
+    if (r.act === '搜库存') v.search++;
+    else if (r.act === '查串码') v.trace++;
+  } else v.login++;
   if (r.at > v.last) { v.last = r.at; v.lastAct = r.act; v.lastInfo = r.info; }
   v.sys[sysName(r.sys)] = 1;
+  if (r.dev) v.devs[r.dev] = 1;
 });
-document.getElementById('byPerson').innerHTML = Object.keys(pm).sort(function (a, b) { return pm[b].n - pm[a].n; }).map(function (k) {
-  var v = pm[k];
-  var what = v.lastAct + (v.lastInfo ? ' · ' + v.lastInfo : '');
-  return '<tr><td><button class="pbtn" data-p="' + esc(k) + '">' + esc(k) + '</button></td>' +
-    '<td>' + v.login + '</td><td>' + v.search + '</td><td>' + v.trace + '</td><td><b>' + v.n + '</b></td>' +
-    '<td class="muted">' + esc(short(what, 42)) + '</td><td>' + esc(v.last) + '</td>' +
-    '<td>' + esc(Object.keys(v.sys).join('、')) + '</td></tr>';
-}).join('') || '<tr><td colspan="8" class="muted">暂无记录</td></tr>';
+var peopleByRecent = Object.keys(pm).sort(function (a, b) { return pm[b].last > pm[a].last ? 1 : -1; });
+var peopleByCount = Object.keys(pm).sort(function (a, b) { return pm[b].n - pm[a].n; });
+var todayRows = D.rows.filter(function (r) { return r.at.slice(0, 10) === TODAY; });
+var bizRows = D.rows.filter(isBiz);
 
-// 按设备
+/* ---------- KPI ---------- */
+var KPIS = [
+  ['k-brand', TODAY + ' 当天记录', todayRows.length, '条', '按真实发生时间统计'],
+  ['k-ok', '业务动作', bizRows.length, '笔', '搜库存 / 查串码等'],
+  ['k-info', '不同账号', D.accounts.length, '个', '本页出现过的姓名'],
+  ['k-warn', '不同设备', D.devices.length, '台', '可在「按设备」里备注']
+];
+document.getElementById('kpis').innerHTML = KPIS.map(function (k) {
+  return '<div class="kpi ' + k[0] + '"><div class="lab">' + esc(k[1]) + '</div>' +
+    '<div class="val num">' + num(k[2]) + '</div><div class="sub">' + esc(k[3]) + ' · ' + esc(k[4]) + '</div></div>';
+}).join('');
+
+/* ---------- 时间线 ---------- */
+document.getElementById('timeline').innerHTML = D.rows.slice(0, 12).map(function (r) {
+  var extra = [r.info, sysName(r.sys), r.dev && nm(r.dev) ? nm(r.dev) : ''].filter(Boolean).join(' · ');
+  return '<li class="tl-item"><span class="dot s-' + styleOf(r) + '"></span><div class="tl-main">' +
+    '<div class="tl-top"><b>' + esc(r.acct) + '</b>' +
+    '<span class="pill s-' + styleOf(r) + '">' + esc(r.act) + '</span>' +
+    (r.delay ? '<span class="pill s-warn">延迟补报</span>' : '') +
+    '<time>' + esc(r.at) + '</time></div>' +
+    '<div class="tl-sub">' + esc(extra || r.src) + '</div></div></li>';
+}).join('') || '<div class="tl-empty">暂无记录</div>';
+
+/* ---------- 排行 ---------- */
+var maxN = peopleByCount.length ? pm[peopleByCount[0]].n : 1;
+document.getElementById('rank').innerHTML = peopleByCount.slice(0, 7).map(function (k) {
+  var v = pm[k];
+  return '<li><span class="nm"><button class="tlink" data-person="' + esc(k) + '">' + esc(k) + '</button></span>' +
+    '<span class="bar"><i style="width:' + Math.max(4, v.n / maxN * 100) + '%"></i></span>' +
+    '<span class="v num">' + v.n + '</span></li>';
+}).join('') || '<div class="tl-empty">暂无记录</div>';
+
+/* ---------- 人物卡 ---------- */
+document.getElementById('people').innerHTML = peopleByRecent.map(function (k) {
+  var v = pm[k], devKeys = Object.keys(v.devs);
+  var devLabel = devKeys.map(function (d) { return nm(d) || d.slice(0, 8); }).slice(0, 2).join('、');
+  var last = v.lastAct + (v.lastInfo ? ' · ' + v.lastInfo : '');
+  return '<button class="pcard" data-person="' + esc(k) + '" aria-label="查看 ' + esc(k) + ' 的全部动作">' +
+    '<div class="pc-head"><span class="avatar">' + esc(k.slice(0, 1)) + '</span>' +
+    '<span class="who"><b>' + esc(k) + '</b><span>最近 ' + esc(v.last) + '</span></span></div>' +
+    '<div class="pc-stats"><div><b class="num">' + v.login + '</b><span>登录 / 退出</span></div>' +
+    '<div><b class="num">' + v.search + '</b><span>搜库存</span></div>' +
+    '<div><b class="num">' + v.trace + '</b><span>查串码</span></div></div>' +
+    '<div class="pc-last"><em>最近做了什么：</em>' + esc(short(last, 52)) + '</div>' +
+    '<div class="pc-foot"><span>看全部 ' + v.n + ' 笔 →</span><span class="dev">' + esc(devLabel || '—') + '</span></div>' +
+    '</button>';
+}).join('') || '<div class="tl-empty">暂无记录</div>';
+
+/* ---------- 设备 ---------- */
 var dm = {};
 D.rows.forEach(function (r) {
   if (!r.dev) return;
@@ -150,58 +427,39 @@ D.rows.forEach(function (r) {
   if (r.at > dm[r.dev].last) dm[r.dev].last = r.at;
   dm[r.dev].acct[r.acct] = 1;
 });
-document.getElementById('byDevice').innerHTML = Object.keys(dm).sort(function (a, b) { return dm[b].last > dm[a].last ? 1 : -1; }).map(function (d) {
-  var v = dm[d];
-  return '<tr><td><span class="tag new">' + esc(d.slice(0, 14)) + '</span></td>' +
-    '<td><input class="nameinput" data-dev="' + esc(d) + '" value="' + esc(nm(d)) + '" placeholder="填个名字"></td>' +
-    '<td>' + v.n + '</td><td>' + esc(Object.keys(v.acct).join('、')) + '</td><td>' + esc(v.last) + '</td><td class="muted">' + esc(v.ua) + '</td></tr>';
-}).join('') || '<tr><td colspan="6" class="muted">新版留痕开始后，有人用过就会出现在这里</td></tr>';
-
+document.getElementById('byDevice').innerHTML = Object.keys(dm)
+  .sort(function (a, b) { return dm[b].last > dm[a].last ? 1 : -1; }).map(function (d) {
+    var v = dm[d];
+    return '<tr><td><span class="pill s-info">' + esc(d.slice(0, 14)) + '</span></td>' +
+      '<td><input class="nameinput" data-dev="' + esc(d) + '" value="' + esc(nm(d)) + '" placeholder="填个名字" aria-label="设备备注"></td>' +
+      '<td class="num">' + v.n + '</td><td>' + esc(Object.keys(v.acct).join('、')) + '</td>' +
+      '<td class="num">' + esc(v.last) + '</td><td class="muted">' + esc(v.ua) + '</td></tr>';
+  }).join('') || '<tr><td colspan="6" class="empty">新版留痕开始后，有人用过就会出现在这里</td></tr>';
 document.getElementById('byDevice').addEventListener('input', function (e) {
-  var el = e.target;
-  if (!el.classList.contains('nameinput')) return;
-  names[el.dataset.dev] = el.value.trim();
-  save();
+  if (!e.target.classList.contains('nameinput')) return;
+  names[e.target.dataset.dev] = e.target.value.trim();
+  saveNames();
   renderDetail();
 });
 
-// 明细筛选：系统 / 时间段 / 动作类型 / 某个人 / 关键词
+/* ---------- 明细筛选 ---------- */
 var st = { sys: 'all', range: 'all', kind: 'all', person: '', q: '' };
 var GROUPS = [
-  ['sys', [['all', '全部系统'], ['board', '数据看板'], ['board_old', '看板(旧版)'], ['inventory', '库存查询'], ['mms', '会员系统']]],
-  ['range', [['all', '本页全部'], ['today', '今天'], ['7', '近 7 天'], ['30', '近 30 天']]],
-  ['kind', [['all', '全部动作'], ['login', '登录 / 退出'], ['biz', '搜了 / 查了什么']]]
+  ['sys', '系统', [['all', '全部'], ['board', '数据看板'], ['board_old', '看板(旧版)'], ['inventory', '库存查询'], ['mms', '会员系统']]],
+  ['range', '时间', [['all', '本页全部'], ['today', '今天'], ['7', '近 7 天'], ['30', '近 30 天']]],
+  ['kind', '动作', [['all', '全部'], ['login', '登录 / 退出'], ['biz', '搜了 / 查了什么']]]
 ];
-function drawFilters() {
-  var h = GROUPS.map(function (g, i) {
-    return (i ? '<span class="sep"></span>' : '') + g[1].map(function (o) {
-      return '<button data-g="' + g[0] + '" data-k="' + o[0] + '" class="' + (st[g[0]] === o[0] ? 'on' : '') + '">' + o[1] + '</button>';
-    }).join('');
+function drawToolbar() {
+  var h = GROUPS.map(function (g) {
+    return '<div class="frow"><span class="flabel">' + g[1] + '</span>' + g[2].map(function (o) {
+      return '<button class="fbtn ' + (st[g[0]] === o[0] ? 'on' : '') + '" data-g="' + g[0] + '" data-k="' + o[0] + '">' + o[1] + '</button>';
+    }).join('') + '</div>';
   }).join('');
-  h += '<span class="sep"></span><input class="qinput" id="q" type="search" value="' + esc(st.q) + '" placeholder="搜姓名 / 搜索词 / 串码 / 设备">';
-  if (st.person) h += '<button class="clear" data-clear="1">正在看：' + esc(st.person) + ' × 清除</button>';
-  document.getElementById('filters').innerHTML = h;
+  h += '<div class="frow"><span class="flabel">查找</span>' +
+    '<input class="qinput" id="q" type="search" value="' + esc(st.q) + '" placeholder="姓名 / 搜索词 / 串码 / 设备" aria-label="查找记录">' +
+    (st.person ? '<button class="fbtn clear" data-clear="1">正在看：' + esc(st.person) + ' × 清除</button>' : '') + '</div>';
+  document.getElementById('toolbar').innerHTML = h;
 }
-document.getElementById('filters').addEventListener('click', function (e) {
-  if (e.target.tagName !== 'BUTTON') return;
-  if (e.target.dataset.clear) { st.person = ''; }
-  else { var g = e.target.dataset.g, k = e.target.dataset.k; if (!g) return; st[g] = k; }
-  drawFilters();
-  renderDetail();
-});
-document.getElementById('filters').addEventListener('input', function (e) {
-  if (e.target.id !== 'q') return;
-  st.q = e.target.value;
-  renderDetail();
-});
-document.getElementById('byPerson').addEventListener('click', function (e) {
-  if (!e.target.classList.contains('pbtn')) return;
-  st.person = e.target.dataset.p;
-  drawFilters();
-  renderDetail();
-  document.getElementById('now').scrollIntoView({ behavior: 'smooth', block: 'center' });
-});
-
 function pad(x) { return (x < 10 ? '0' : '') + x; }
 function dayStr(d) {
   return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' +
@@ -226,24 +484,72 @@ function renderDetail() {
     }
     return true;
   });
-  document.getElementById('now').textContent = '当前显示 ' + rows.length + ' 条 / 本页共 ' + D.rows.length + ' 条' +
+  document.getElementById('now').textContent = '当前显示 ' + num(rows.length) + ' 条 / 本页共 ' + num(D.rows.length) + ' 条' +
     (st.person ? '（只看 ' + st.person + '）' : '');
   document.getElementById('detail').innerHTML = rows.map(function (r) {
-    var late = r.delay ? '<span class="tag late" title="Mac 收到时间 ' + esc(r.recv) + '">延迟补报 → ' + esc(r.recv) + '</span>' : '';
-    var dev = r.dev ? '<span class="tag new">' + esc(r.dev.slice(0, 14)) + '</span>' : '<span class="muted">—</span>';
-    var remark = r.dev && nm(r.dev) ? '<b>' + esc(nm(r.dev)) + '</b>' : '';
-    var actCls = (r.act.indexOf('错误') >= 0 || r.act.indexOf('频繁') >= 0) ? 'bad' : '';
-    return '<tr><td>' + esc(r.at) + ' ' + late + '</td>' +
-      '<td><span class="tag ' + (r.src === '新版留痕' ? 'new' : 'old') + '">' + esc(r.src) + '</span></td>' +
+    var late = r.delay ? ' <span class="pill s-warn" title="Mac 收到时间 ' + esc(r.recv) + '">延迟补报 → ' + esc(r.recv) + '</span>' : '';
+    var dev = r.dev ? '<span class="pill s-info">' + esc(r.dev.slice(0, 14)) + '</span>' : '<span class="muted">—</span>';
+    return '<tr><td class="num">' + esc(r.at) + late + '</td>' +
+      '<td><span class="pill ' + (r.src === '新版留痕' ? 's-ok' : 's-mute') + '">' + esc(r.src) + '</span></td>' +
       '<td>' + esc(sysName(r.sys)) + '</td><td><b>' + esc(r.acct) + '</b></td>' +
-      '<td><span class="tag ' + actCls + '">' + esc(r.act) + '</span></td>' +
+      '<td><span class="pill s-' + styleOf(r) + '">' + esc(r.act) + '</span></td>' +
       '<td class="muted">' + esc(r.info || '—') + '</td>' +
       '<td>' + esc(r.store || '—') + '</td><td>' + dev + '</td>' +
-      '<td class="muted">' + esc(r.ua) + '</td><td>' + remark + '</td></tr>';
-  }).join('') || '<tr><td colspan="10" class="muted">这个筛选下暂无记录</td></tr>';
+      '<td class="muted">' + esc(r.ua) + '</td><td>' + (r.dev && nm(r.dev) ? '<b>' + esc(nm(r.dev)) + '</b>' : '') + '</td></tr>';
+  }).join('') || '<tr><td colspan="10" class="empty">这个筛选下暂无记录</td></tr>';
 }
-drawFilters();
+document.getElementById('toolbar').addEventListener('click', function (e) {
+  if (e.target.tagName !== 'BUTTON') return;
+  if (e.target.dataset.clear) st.person = '';
+  else { var g = e.target.dataset.g, k = e.target.dataset.k; if (!g) return; st[g] = k; }
+  drawToolbar(); renderDetail();
+});
+document.getElementById('toolbar').addEventListener('input', function (e) {
+  if (e.target.id !== 'q') return;
+  st.q = e.target.value; renderDetail();
+});
+
+/* ---------- Tab ---------- */
+var TABS = [['overview', '概览'], ['people', '按人看'], ['devices', '按设备'], ['detail', '每一笔明细']];
+function showTab(k) {
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) {
+    b.setAttribute('aria-selected', b.dataset.k === k ? 'true' : 'false');
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.panel-view'), function (p) {
+    p.hidden = p.dataset.k !== k;
+  });
+}
+document.getElementById('tabs').innerHTML = TABS.map(function (t, i) {
+  var c = t[0] === 'people' ? peopleByRecent.length : (t[0] === 'devices' ? Object.keys(dm).length : (t[0] === 'detail' ? D.rows.length : 0));
+  return '<button class="tab" id="t-' + t[0] + '" role="tab" data-k="' + t[0] + '" aria-controls="p-' + t[0] + '"' +
+    ' aria-selected="' + (i === 0) + '">' + t[1] + (c ? '<span class="cnt num">' + num(c) + '</span>' : '') + '</button>';
+}).join('');
+document.getElementById('tabs').addEventListener('click', function (e) {
+  if (!e.target.classList.contains('tab')) return;
+  showTab(e.target.dataset.k);
+});
+document.getElementById('tabs').addEventListener('keydown', function (e) {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  var bs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var i = bs.indexOf(document.activeElement); if (i < 0) return;
+  var j = (i + (e.key === 'ArrowRight' ? 1 : -1) + bs.length) % bs.length;
+  bs[j].focus(); showTab(bs[j].dataset.k); e.preventDefault();
+});
+
+/* 点姓名 / 人物卡 → 明细只看这个人 */
+function openPerson(k) {
+  st.person = k; st.sys = 'all'; st.range = 'all'; st.kind = 'all'; st.q = '';
+  drawToolbar(); renderDetail(); showTab('detail');
+  document.getElementById('p-detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+document.addEventListener('click', function (e) {
+  var el = e.target.closest('[data-person]');
+  if (el) openPerson(el.dataset.person);
+});
+
+drawToolbar();
 renderDetail();
+showTab('overview');
 </script>
 </body>
 </html>
