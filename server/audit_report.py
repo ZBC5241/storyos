@@ -93,27 +93,119 @@ def geo_lookup(ip, cache):
             loc = ' '.join(parts)
     except Exception:
         loc = ''
-    cache[ip] = {'loc': loc, 'ts': now}
+        cache[ip] = {'loc': loc, 'ts': now}
+        return loc
+
+
+# 【18号 2026-11-13 18:46】门店坐标：判定「在哪家店」的基准。门店搬迁只改这里。
+STORES = [
+    ('李家村万达', 34.24347, 108.96173),   # 碑林区雁塔北路8号
+    ('华阳城', 34.279786, 109.071555),     # 灞桥区长乐东路与纺渭路交叉口西北角
+]
+
+
+def _to_float(v):
+    try:
+        return float(v)
+    except Exception:
+        return None
+
+
+def haversine(lat1, lng1, lat2, lng2):
+    import math
+    R = 6371000.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dl = math.radians(lng2 - lng1)
+    a = math.sin(dphi / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * R * math.asin(min(1.0, math.sqrt(a)))
+
+
+def _fmt_dist(d):
+    return ('%d 米' % round(d)) if d < 1000 else ('%.1f km' % (d / 1000.0))
+
+
+def classify_store(lat, lng):
+    """按到已知门店坐标的距离判定在哪家店；>300 米算店外，并给出最近门店与距离。"""
+    best = None
+    for name, slat, slng in STORES:
+        d = haversine(lat, lng, slat, slng)
+        if best is None or d < best[1]:
+            best = (name, d)
+    name, d = best
+    if d <= 300:
+        return '在店：%s（约 %s）' % (name, _fmt_dist(d))
+    return '店外 · 距 %s %s' % (name, _fmt_dist(d))
+
+
+def reverse_geo(lat, lng, cache):
+    """lat/lng -> 省/市/区 + 精确定位码（plusCode，约 14 米精度）。查不到返回空，不猜。"""
+    if lat is None or lng is None:
+        return ''
+    key = 'g:%.4f,%.4f' % (lat, lng)
+    now = time.time()
+    hit = cache.get(key)
+    if hit and (hit.get('loc') or now - hit.get('ts', 0) < 86400):
+        return hit.get('loc', '')
+    loc = ''
+    try:
+        from urllib.request import urlopen
+        url = ('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=%s'
+               '&longitude=%s&localityLanguage=zh') % (lat, lng)
+        with urlopen(url, timeout=3) as r:
+            d = json.loads(r.read().decode('utf-8', 'replace'))
+        parts = []
+        for k in ('principalSubdivision', 'city', 'locality'):
+            v = (d.get(k) or '').strip()
+            if v and v not in parts:
+                parts.append(v)
+        plus = (d.get('plusCode') or '').strip()
+        if plus:
+            parts.append('位置码 ' + plus)
+        loc = ' '.join(parts)
+    except Exception:
+        loc = ''
+    cache[key] = {'loc': loc, 'ts': now}
     return loc
 
 
 def attach_locations(rows):
-    """同一个上网地址只查一次并缓存；老记录没有地址字段就留空，不冒充、不回填。"""
+    """IP -> 推测归属地（IP 库）；GPS -> 在店判定 + 街道级定位码。两者都只查一次并缓存；
+    老记录没有这些字段就留空，不冒充、不回填。"""
     with _geo_lock:
         cache = _load_geo_cache()
         dirty = False
         for r in rows:
+            # —— 上网地址 -> 推测归属地（IP 库）——
             ip = r.get('ip', '')
-            if not ip:
-                r['loc'] = ''
-                continue
-            if _private_ip(ip):
+            if ip and not _private_ip(ip):
+                before = cache.get(ip)
+                r['loc'] = geo_lookup(ip, cache)
+                if before != cache.get(ip):
+                    dirty = True
+            elif ip and _private_ip(ip):
                 r['loc'] = '本机 / 内网'
-                continue
-            before = cache.get(ip)
-            r['loc'] = geo_lookup(ip, cache)
-            if before != cache.get(ip):
-                dirty = True
+            else:
+                r['loc'] = ''
+            # —— GPS 精确位置 ——
+            lat = _to_float(r.get('lat'))
+            lng = _to_float(r.get('lng'))
+            if lat is not None and lng is not None:
+                gkey = 'g:%.4f,%.4f' % (lat, lng)
+                before_g = cache.get(gkey)
+                r['geo'] = classify_store(lat, lng)
+                r['geo_addr'] = reverse_geo(lat, lng, cache)
+                r['acc'] = r.get('acc') or ''
+                if cache.get(gkey) != before_g:
+                    dirty = True
+            elif r.get('geo') == 'denied':
+                r['geo'] = '拒绝授权'
+                r['geo_addr'] = ''
+                r['acc'] = ''
+            else:
+                r['geo'] = ''
+                r['geo_addr'] = ''
+                r['acc'] = ''
         if dirty:
             _save_geo_cache(cache)
     return rows
@@ -146,13 +238,15 @@ def old_records():
                 'act': ACT_CN.get(code, '登录' + code),
                 'acct': acct or '(空)', 'store': store or '',
                 'dev': '', 'ua': '旧版服务端记录', 'ip': '', 'loc': '',
+                'lat': '', 'lng': '', 'acc': '', 'geo': '',
                 'src': '旧版联网登录', 'delay': False,
             })
     return out
 
 
 def new_records():
-    """新版留痕：at=事件真实发生时刻，行首=Mac 收到时刻，两者分开存。"""
+    """新版留痕：at=事件真实发生时刻，行首=Mac 收到时刻，两者分开存。
+    中间的 info/dev/ip/lat/lng/acc/geo 用 key=value 逐对解析，顺序无关、缺字段不漏行。"""
     out = []
     if not os.path.exists(AUDIT_LOG):
         return out
@@ -160,13 +254,15 @@ def new_records():
         r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+'
         r'at=(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+'
         r'sys=(\S+)\s+act=(\S+)\s+acct=(\S*)\s+store=(\S*)\s+'
-        r'(?:info=(\S*)\s+)?dev=(\S+)\s+(?:ip=(\S*)\s+)?ua=(.*)$')
+        r'(.*?)\s+ua=(.*)$')
+    kv = re.compile(r'(\w+)=(\S*)')
     with open(AUDIT_LOG, encoding='utf-8', errors='replace') as f:
         for line in f:
             m = pat.match(line.strip())
             if not m:
                 continue
-            recv, at, sysx, act, acct, store, info, dev, ip, ua = m.groups()
+            recv, at, sysx, act, acct, store, mid, ua = m.groups()
+            d = {k: v for k, v in kv.findall(mid)}
             a, b = parse_ts(at), parse_ts(recv)
             delayed = bool(a and b and abs((b - a).total_seconds()) > 60)
             out.append({
@@ -174,8 +270,10 @@ def new_records():
                 'sys': sysx if sysx in SYS_CN else 'board',
                 'act': ACT_CN.get(act, act),
                 'acct': acct or '(空)', 'store': store or '',
-                'dev': dev, 'ua': ua.strip(), 'ip': ip or '', 'loc': '',
-                'info': unquote(info or ''),
+                'dev': d.get('dev', ''), 'ua': ua.strip(), 'ip': d.get('ip', '') or '', 'loc': '',
+                'lat': d.get('lat', '') or '', 'lng': d.get('lng', '') or '',
+                'acc': d.get('acc', '') or '', 'geo': d.get('geo', '') or '',
+                'info': unquote(d.get('info', '') or ''),
                 'src': '新版留痕', 'delay': delayed,
             })
     return out

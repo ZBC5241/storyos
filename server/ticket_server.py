@@ -867,9 +867,11 @@ class Handler(BaseHTTPRequestHandler):
                 _xff = (self.headers.get('X-Forwarded-For') or '').split(',')[0].strip()
                 _ip = audit_clean(_xff or (self.headers.get('X-Real-IP') or '').strip()
                                   or self.client_address[0], 45)
-                audit_log('at=%s sys=%s act=%s acct=%s store=%s info=%s dev=%s ip=%s ua=%s' % (
+                _lat, _lng, _acc, _geo = gv('lat', 20), gv('lng', 20), gv('acc', 12), gv('geo', 12)
+                audit_log('at=%s sys=%s act=%s acct=%s store=%s info=%s dev=%s ip=%s lat=%s lng=%s acc=%s geo=%s ua=%s' % (
                     _at, _sys, _act, gv('acct', 32), gv('store', 12),
-                    audit_info(gv('info', 160), 160), gv('dev', 32), _ip, gv('ua', 120)))
+                    audit_info(gv('info', 160), 160), gv('dev', 32), _ip,
+                    _lat, _lng, _acc, _geo, gv('ua', 120)))
                 # 每收到一条就顺手刷新「谁来过」清单页，晨哥双击本地文件永远是最新；
                 # 报告失败绝不能影响留痕本身，故独立吞异常。
                 try:
