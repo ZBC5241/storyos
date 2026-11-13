@@ -686,12 +686,12 @@ function openDrawer(r) {
     dl('设备编号', esc(r.dev || '—'), true) + dl('设备备注', esc(nm(r.dev) || '—')) +
     dl('设备大概样子', esc(r.ua || '—')) +
     dl('上网地址', esc(r.ip || '未记录'), true) +
-    dl('地点（按上网地址推测）', r.loc ? esc(r.loc) :
+    dl('地点（推测）', r.loc ? esc(r.loc) :
        (r.ip ? '<span class="tag s-warn">未查到</span>' : '<span class="muted">未记录</span>')) +
     dl('是否延迟补报', r.delay ? '<span class="tag s-warn">是 · 手机当时记的时间，本机后来才收到</span>' : '否');
   h += '<div class="drawer-note">时间 / 账号 / 动作 / 设备编号来自本机日志，没有补写。' +
-    '地点是按上网地址查第三方库推测的<b>归属地</b>，不是设备精确定位，也不是门牌号；' +
-    '查不到就写「未查到」，不猜。本页生成 ' + esc(D.generatedAt) + '，库里最后一笔 ' + esc(D.lastAt) + '。</div>';
+    '地点＝按上网地址查库推测的<b>归属地</b>，不是 GPS 精确定位；查不到显示「未查到」，不猜。' +
+    '本页生成 ' + esc(D.generatedAt) + '，库里最后一笔 ' + esc(D.lastAt) + '。</div>';
   document.getElementById('drawerBody').innerHTML = h;
   drawer.classList.add('on');
 }
