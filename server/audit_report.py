@@ -101,24 +101,27 @@ def log_bytes():
     return sum(os.path.getsize(p) for p in (SERVER_LOG, AUDIT_LOG) if os.path.exists(p))
 
 
-def build(window_days=30, person=None, out=None):
+def build(scope='today', window_days=0, person=None, out=None):
     """线程安全：服务端每收到一条纸条就刷新一次，多个请求并发也不互相写坏文件。
 
-    【18号 2026-11-13】清单页默认只内嵌最近 30 天：
-    日志是无限追加的，若每条都把全部历史塞进 HTML，一年后页面会膨胀到几十 MB，
-    双击打不开、每记一笔还要全量重拼一次。窗口只影响「本页装多少」，
-    日志文件里一条都不删，--days / --all / --person 随时能把历史单独导出来。
+    【18号 2026-11-13 16:30 晨哥定调】清单页默认**只装今天**（自然日 00:00 起）：
+    历史数据不在页面里出现，但日志文件一条都不删。
+    --days / --all / --person 仍可随时把历史单独导出来。
+    scope: today=今天 / days=近 N 天 / all=全部历史。
     """
     with _build_lock:
         all_rows = old_records() + new_records()
         # 同一秒有多笔时，让「后写进日志的」排在前面；sort 稳定，按人聚合取第一条才是真正最后一次
         all_rows.reverse()
         all_rows.sort(key=lambda r: r['at'], reverse=True)
+        from datetime import timedelta
         cutoff = ''
-        if window_days:
-            from datetime import timedelta
+        if scope == 'today':
+            cutoff = datetime.now().strftime('%Y-%m-%d') + ' 00:00:00'
+        elif window_days:
             cutoff = (datetime.now() - timedelta(days=window_days)).strftime('%Y-%m-%d %H:%M:%S')
-        rows = [r for r in all_rows if not cutoff or r['at'] == '-' or r['at'] >= cutoff]
+        # 今天口径下，没有真实发生时刻的记录无法归到今天，不冒充今天的记录
+        rows = [r for r in all_rows if not cutoff or (r['at'] != '-' and r['at'] >= cutoff)]
         if person:
             rows = [r for r in rows if person in r['acct']]
         gen = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -132,6 +135,8 @@ def build(window_days=30, person=None, out=None):
             'devices': devices, 'accounts': accounts,
             'sysCn': SYS_CN,
             'meta': {
+                'scope': scope,
+                'scopeLabel': '今天' if scope == 'today' else ('全部历史' if scope == 'all' else '近 %d 天' % window_days),
                 'windowDays': window_days,
                 'totalAll': len(all_rows),
                 'shown': len(rows),
@@ -155,11 +160,18 @@ def build(window_days=30, person=None, out=None):
 
 if __name__ == '__main__':
     import argparse
-    ap = argparse.ArgumentParser(description='生成「谁来过」清单页')
-    ap.add_argument('--days', type=int, default=30, help='本页只装最近 N 天（默认 30）')
+    ap = argparse.ArgumentParser(description='生成使用监控台清单页')
+    ap.add_argument('--days', type=int, default=0, help='装最近 N 天（默认只装今天）')
     ap.add_argument('--all', action='store_true', help='把日志库全部历史装进这一页')
     ap.add_argument('--person', default='', help='只导某个人（姓名可只写一部分）')
     ap.add_argument('--out', default=OUT, help='输出文件')
     a = ap.parse_args()
-    n = build(window_days=0 if a.all else a.days, person=a.person or None, out=a.out)
-    print('✅ 已生成 %s | 本页 %d 条' % (a.out, n))
+    kw = {'person': a.person or None, 'out': a.out}
+    if a.all:
+        kw['scope'] = 'all'
+    elif a.days:
+        kw['scope'], kw['window_days'] = 'days', a.days
+    else:
+        kw['scope'] = 'today'
+    n = build(**kw)
+    print('✅ 已生成 %s | 口径 %s | 本页 %d 条' % (a.out, kw['scope'], n))

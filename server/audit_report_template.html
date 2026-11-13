@@ -359,7 +359,7 @@ button{cursor:pointer}
         <li>老记录只有「哪个账号 + 什么时候」；2026-11-13 起库存查询新增「做了什么」（搜了什么词、查了哪个串码）。</li>
         <li>请求经隧道转进 Mac，真实来源地址一律是 127.0.0.1，<b>看不到是谁的手机、在哪个地方</b>；设备备注只存在本机浏览器里。</li>
         <li>标「延迟补报」的条目：真实发生时间按手机当时那一刻算，Mac 是后来才收到的，两个时间都列出来了。</li>
-        <li><b>本页默认只装最近 30 天</b>，更早的记录一条没删，全在这台 Mac 的日志文件里，可以单独导一份。</li>
+        <li><b>本页只装今天（00:00 起）的记录</b>。以前的记录一条没删，还留在这台 Mac 的日志文件里，需要时可以单独导一份。</li>
       </ul>
       <div class="okline">✅ 从 2026-11-13 起记：登录 / 输错密码 / 退出 / 打开页面，库存查询再记<b>搜了什么、查了哪个串码</b>。<b>不记密码、不记库存数值</b>；登录本身仍不联网，断网照样能进。</div>
     </div>
@@ -378,7 +378,7 @@ button{cursor:pointer}
     <button class="tbbtn" data-view="detail"><i></i>完整明细</button>
   </div>
   <div class="tray">
-    <span class="led"><i></i>账本 <em id="trayTotal">—</em></span>
+    <span class="led"><i></i>今日 <em id="trayTotal">—</em></span>
     <span>体积 <em id="traySize">—</em></span>
     <span>截止 <em id="trayLast">—</em></span>
   </div>
@@ -424,7 +424,7 @@ if (M.person) {
 }
 document.getElementById('stampGen').textContent = D.generatedAt || '—';
 document.getElementById('stampLast').textContent = D.lastAt || '—';
-document.getElementById('trayTotal').textContent = num(M.totalAll == null ? D.rows.length : M.totalAll) + ' 条';
+document.getElementById('trayTotal').textContent = num(D.rows.length) + ' 条';
 document.getElementById('traySize').textContent = M.logSize || '—';
 document.getElementById('trayLast').textContent = (D.lastAt || '').slice(5, 16) || '—';
 
@@ -457,17 +457,18 @@ var peopleByCount = Object.keys(pm).sort(function (a, b) { return pm[b].n - pm[a
 var peopleByRecent = Object.keys(pm).sort(function (a, b) { return pm[b].last > pm[a].last ? 1 : -1; });
 var todayN = D.rows.filter(function (r) { return (r.at || '').slice(0, 10) === TODAY; }).length;
 var bizN = D.rows.filter(isBiz).length;
+var okN = D.rows.filter(function (r) { return styleOf(r) === 'ok'; }).length;
 var failN = D.rows.filter(function (r) { return styleOf(r) === 'bad'; }).length;
 var devN = Object.keys(dm).length;
 
 /* 顶部指标条 */
 var METRICS = [
-  ['日志库总记录', num(M.totalAll == null ? D.rows.length : M.totalAll), '', 100, ''],
-  ['今天动作', num(todayN), '', Math.min(100, todayN / Math.max(1, D.rows.length) * 100), ''],
+  ['今天记录', num(D.rows.length), '', 100, ''],
+  ['登录成功', num(okN), '', Math.min(100, okN / Math.max(1, D.rows.length) * 100), ''],
   ['搜了 / 查了', num(bizN), '', Math.min(100, bizN / Math.max(1, D.rows.length) * 100), 'm-biz'],
+  ['输错密码', num(failN), '', Math.min(100, failN / Math.max(1, D.rows.length) * 100), 'm-warn'],
   ['涉及人数', num(peopleByCount.length), '', Math.min(100, peopleByCount.length / Math.max(1, D.rows.length) * 100), ''],
-  ['涉及设备', num(devN), '', Math.min(100, devN / Math.max(1, D.rows.length) * 100), ''],
-  ['输错密码', num(failN), '', Math.min(100, failN / Math.max(1, D.rows.length) * 100), 'm-warn']
+  ['涉及设备', num(devN), '', Math.min(100, devN / Math.max(1, D.rows.length) * 100), '']
 ];
 document.getElementById('metrics').innerHTML = METRICS.map(function (m) {
   return '<div class="metric ' + m[4] + '"><span class="lab">' + esc(m[0]) + '</span>' +
@@ -552,7 +553,7 @@ function renderLive() {
       '<td class="c-src"><span class="tag ' + srcTag(r) + '">' + esc(r.src) + '</span></td></tr>';
   }).join('') || '<tr><td colspan="9" class="empty">这个筛选下暂无记录</td></tr>';
   document.getElementById('liveFoot').innerHTML = '显示前 <b>' + num(shown.length) + '</b> 笔 / 筛选后 <b>' +
-    num(rows.length) + '</b> 笔 / 本页共 <b>' + num(D.rows.length) + '</b> 笔' +
+    num(rows.length) + '</b> 笔 / 今日共 <b>' + num(D.rows.length) + '</b> 笔' +
     (st.person ? ' · 只看 ' + esc(st.person) : '') + ' · 完整清单见「完整明细」';
 }
 function renderDetail() {
@@ -572,8 +573,8 @@ function renderDetail() {
       '<td class="c-note">' + (r.dev && nm(r.dev) ? '<b>' + esc(nm(r.dev)) + '</b>' : '—') + '</td>' +
       '<td class="c-ua muted">' + esc(short(r.ua, 44)) + '</td></tr>';
   }).join('') || '<tr><td colspan="12" class="empty">这个筛选下暂无记录</td></tr>';
-  document.getElementById('detailFoot').innerHTML = '当前显示 <b>' + num(rows.length) + '</b> 条 / 本页共 <b>' +
-    num(D.rows.length) + '</b> 条 · 日志最早一笔 ' + esc(M.earliestAll || '—');
+  document.getElementById('detailFoot').innerHTML = '当前显示 <b>' + num(rows.length) + '</b> 条 / 今日共 <b>' +
+    num(D.rows.length) + '</b> 条 · 口径：只统计今天（00:00 起）';
 }
 function renderBoth() { renderLive(); renderDetail(); }
 
