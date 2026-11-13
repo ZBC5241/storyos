@@ -131,6 +131,8 @@ button{cursor:pointer}
 .grid .c-sys{color:var(--ink2);width:110px}
 .grid .c-dev{color:var(--ink3);font-family:var(--mono);font-size:10.5px;width:120px}
 .grid .c-src{color:var(--ink3);font-size:11px;width:92px}
+.grid .c-loc{color:var(--ok);font-size:11px;width:150px}
+.grid .c-ip{color:var(--ink3);font-family:var(--mono);font-size:10.5px;width:120px}
 .grid .muted{color:var(--ink3)}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3b5264;vertical-align:middle}
 .dot.s-ok{background:var(--ok);box-shadow:0 0 0 3px rgba(47,224,165,.12)}
@@ -246,7 +248,7 @@ button{cursor:pointer}
   .grid{font-size:11.5px}
   .grid thead th{padding:7px 7px;font-size:9.5px}
   .grid tbody td{padding:6px 7px;max-width:180px}
-  .grid .c-num,.grid .c-dev,.grid .c-src,.grid .c-sys,.grid .c-store,.grid .c-ua,.grid .c-note,.grid .c-recv{display:none}
+  .grid .c-num,.grid .c-dev,.grid .c-src,.grid .c-sys,.grid .c-store,.grid .c-ua,.grid .c-note,.grid .c-recv,.grid .c-loc,.grid .c-ip{display:none}
   .grid .c-time{width:74px;font-size:10.5px}
   .grid .c-time em{display:none}
   .grid .c-acct{width:auto}
@@ -308,12 +310,12 @@ button{cursor:pointer}
   </div>
 
   <section class="view" id="v-live" data-k="live">
-    <div class="secbar"><h2>实时流水</h2><span class="hint">按真实发生时间倒序 · 点一行看完整字段</span></div>
+    <div class="secbar"><h2>实时流水</h2><span class="hint">按真实发生时间倒序 · 点一行看完整字段 · 地点自 17:30 起记录，之前不补</span></div>
     <div class="toolbar" id="toolbarLive"></div>
     <div class="tablewrap"><table class="grid">
       <thead><tr>
         <th class="c-num">#</th><th class="c-time">时间</th><th>状态</th><th class="c-acct">账号</th>
-        <th>动作</th><th class="c-info">做了什么</th><th class="c-sys">系统</th><th class="c-dev">设备</th><th class="c-src">来源</th>
+        <th>动作</th><th class="c-info">做了什么</th><th class="c-sys">系统</th><th class="c-dev">设备</th><th class="c-loc">地点（推测）</th><th class="c-src">来源</th>
       </tr></thead><tbody id="liveRows"></tbody>
     </table></div>
     <div class="footline" id="liveFoot"></div>
@@ -344,6 +346,7 @@ button{cursor:pointer}
       <thead><tr><th class="c-num">#</th><th class="c-time">真实发生时间</th><th class="c-recv">本机收到</th>
         <th class="c-src">来源</th><th class="c-sys">系统</th><th class="c-acct">账号</th><th>动作</th>
         <th class="c-info">做了什么</th><th class="c-store">门店</th><th class="c-dev">设备</th>
+        <th class="c-ip">上网地址</th><th class="c-loc">地点（推测）</th>
         <th class="c-note">备注</th><th class="c-ua">设备大概样子</th></tr></thead>
       <tbody id="detailRows"></tbody>
     </table></div>
@@ -357,11 +360,12 @@ button{cursor:pointer}
         <li><b>库存查询</b>在「新版留痕」开始之前，登录是网页自己认的，<b>一条记录都没有</b>，历史补不回来。</li>
         <li><b>数据看板</b> 2026-11-12 21:44 改成不联网登录之后，到「新版留痕」开始之前也是空的。</li>
         <li>老记录只有「哪个账号 + 什么时候」；2026-11-13 起库存查询新增「做了什么」（搜了什么词、查了哪个串码）。</li>
-        <li>请求经隧道转进 Mac，真实来源地址一律是 127.0.0.1，<b>看不到是谁的手机、在哪个地方</b>；设备备注只存在本机浏览器里。</li>
+        <li><b>17:30 起新增「上网地址 + 地点」</b>：隧道虽然把连接地址变成 127.0.0.1，但会把真实上网地址带过来（客户端伪造会被隧道覆盖，17:28 实测）。地点＝拿这个地址查第三方 IP 库得到的<b>推测归属地（省/市/区）</b>，<b>不是手机 GPS 精确定位、不是门牌号</b>；查不到显示「未查到」，绝不猜。</li>
+        <li><b>17:30 之前的记录没有这个字段</b>，一律显示「未记录」，不回填、不补造。设备备注只存在本机浏览器里。</li>
         <li>标「延迟补报」的条目：真实发生时间按手机当时那一刻算，Mac 是后来才收到的，两个时间都列出来了。</li>
         <li><b>本页只装今天（00:00 起）的记录</b>。以前的记录一条没删，还留在这台 Mac 的日志文件里，需要时可以单独导一份。</li>
       </ul>
-      <div class="okline">✅ 从 2026-11-13 起记：登录 / 输错密码 / 退出 / 打开页面，库存查询再记<b>搜了什么、查了哪个串码</b>。<b>不记密码、不记库存数值</b>；登录本身仍不联网，断网照样能进。</div>
+      <div class="okline">✅ 从 2026-11-13 起记：登录 / 输错密码 / 退出 / 打开页面，库存查询再记<b>搜了什么、查了哪个串码</b>；<b>17:30 起</b>再记<b>上网地址与推测归属地</b>。<b>不记密码、不记库存数值、不取手机 GPS</b>；登录本身仍不联网，断网照样能进。</div>
     </div>
   </details>
   <div class="pagefoot">18号 · 全部来自这台 Mac 上的真实日志文件，未补写、未推测 · 页面不联网、不上传、不推群</div>
@@ -529,7 +533,8 @@ function rowsOf() {
     if (st.person && r.acct !== st.person) return false;
     if (cut && r.at !== '-' && r.at < cut) return false;
     if (q) {
-      var hay = [r.at, r.src, sysName(r.sys), r.acct, r.act, r.info, r.store, r.dev, r.ua, nm(r.dev)].join(' ').toLowerCase();
+      var hay = [r.at, r.src, sysName(r.sys), r.acct, r.act, r.info, r.store, r.dev, r.ua,
+                 r.ip, r.loc, nm(r.dev)].join(' ').toLowerCase();
       if (hay.indexOf(q) < 0) return false;
     }
     return true;
@@ -537,6 +542,12 @@ function rowsOf() {
 }
 function timeCell(r) {
   return '<span class="mono c-time"><em>' + esc((r.at || '').slice(5, 10)) + '</em>' + esc((r.at || '').slice(11) || '—') + '</span>';
+}
+/* 地点只按「上网地址查库推测」；老记录没这个字段、查不到就是查不到，都不猜 */
+function locCell(r) {
+  if (!r.ip) return '<span class="muted">未记录</span>';
+  if (!r.loc) return '<span class="muted">未查到</span>';
+  return esc(r.loc);
 }
 function renderLive() {
   var rows = rowsOf(), shown = rows.slice(0, 200);
@@ -550,8 +561,9 @@ function renderLive() {
       '<td class="c-info">' + esc(r.info || '—') + '</td>' +
       '<td class="c-sys">' + esc(sysName(r.sys)) + '</td>' +
       '<td class="c-dev">' + (r.dev ? esc(nm(r.dev) || r.dev.slice(0, 14)) : '—') + '</td>' +
+      '<td class="c-loc">' + locCell(r) + '</td>' +
       '<td class="c-src"><span class="tag ' + srcTag(r) + '">' + esc(r.src) + '</span></td></tr>';
-  }).join('') || '<tr><td colspan="9" class="empty">这个筛选下暂无记录</td></tr>';
+  }).join('') || '<tr><td colspan="10" class="empty">这个筛选下暂无记录</td></tr>';
   document.getElementById('liveFoot').innerHTML = '显示前 <b>' + num(shown.length) + '</b> 笔 / 筛选后 <b>' +
     num(rows.length) + '</b> 笔 / 今日共 <b>' + num(D.rows.length) + '</b> 笔' +
     (st.person ? ' · 只看 ' + esc(st.person) : '') + ' · 完整清单见「完整明细」';
@@ -570,9 +582,11 @@ function renderDetail() {
       '<td class="c-info">' + esc(r.info || '—') + '</td>' +
       '<td class="c-store">' + esc(r.store || '—') + '</td>' +
       '<td class="c-dev">' + (r.dev ? esc(short(r.dev, 16)) : '—') + '</td>' +
+      '<td class="c-ip">' + esc(r.ip || '—') + '</td>' +
+      '<td class="c-loc">' + locCell(r) + '</td>' +
       '<td class="c-note">' + (r.dev && nm(r.dev) ? '<b>' + esc(nm(r.dev)) + '</b>' : '—') + '</td>' +
       '<td class="c-ua muted">' + esc(short(r.ua, 44)) + '</td></tr>';
-  }).join('') || '<tr><td colspan="12" class="empty">这个筛选下暂无记录</td></tr>';
+  }).join('') || '<tr><td colspan="14" class="empty">这个筛选下暂无记录</td></tr>';
   document.getElementById('detailFoot').innerHTML = '当前显示 <b>' + num(rows.length) + '</b> 条 / 今日共 <b>' +
     num(D.rows.length) + '</b> 条 · 口径：只统计今天（00:00 起）';
 }
@@ -671,9 +685,13 @@ function openDrawer(r) {
     dl('做了什么', esc(r.info || '—'), true) + dl('门店', esc(r.store || '—')) +
     dl('设备编号', esc(r.dev || '—'), true) + dl('设备备注', esc(nm(r.dev) || '—')) +
     dl('设备大概样子', esc(r.ua || '—')) +
+    dl('上网地址', esc(r.ip || '未记录'), true) +
+    dl('地点（按上网地址推测）', r.loc ? esc(r.loc) :
+       (r.ip ? '<span class="tag s-warn">未查到</span>' : '<span class="muted">未记录</span>')) +
     dl('是否延迟补报', r.delay ? '<span class="tag s-warn">是 · 手机当时记的时间，本机后来才收到</span>' : '否');
-  h += '<div class="drawer-note">这条记录来自本机日志文件，没有补写、没有推测。本页生成 ' +
-    esc(D.generatedAt) + '，库里最后一笔 ' + esc(D.lastAt) + '。</div>';
+  h += '<div class="drawer-note">时间 / 账号 / 动作 / 设备编号来自本机日志，没有补写。' +
+    '地点是按上网地址查第三方库推测的<b>归属地</b>，不是设备精确定位，也不是门牌号；' +
+    '查不到就写「未查到」，不猜。本页生成 ' + esc(D.generatedAt) + '，库里最后一笔 ' + esc(D.lastAt) + '。</div>';
   document.getElementById('drawerBody').innerHTML = h;
   drawer.classList.add('on');
 }

@@ -12,6 +12,7 @@
 import os
 import re
 import json
+import time
 import threading
 from urllib.parse import unquote
 from datetime import datetime
@@ -20,6 +21,8 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 SERVER_LOG = os.path.join(BASE, 'logs', 'server.log')
 AUDIT_LOG = os.path.join(BASE, 'logs', 'audit.log')
 OUT = '/Users/mac/WorkBuddy/2026-09-24-20-39-28/登录记录-最新版.html'
+# 【18号 2026-11-13 17:30】上网地址 -> 归属地缓存（只存本机 logs/，不进 git、不上公网）
+GEO_CACHE = os.path.join(BASE, 'logs', 'ip_geo_cache.json')
 
 SYS_CN = {
     'board': '数据看板', 'board_old': '数据看板（旧版）',
@@ -31,6 +34,89 @@ ACT_CN = {
     'detail': '看明细', 'export': '导出', 'copy': '复制',
     '200': '登录成功', '401': '账号或密码错误', '429': '尝试太频繁',
 }
+
+
+_geo_lock = threading.Lock()
+
+
+def _load_geo_cache():
+    try:
+        with open(GEO_CACHE, encoding='utf-8') as f:
+            d = json.load(f)
+            return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_geo_cache(d):
+    try:
+        os.makedirs(os.path.dirname(GEO_CACHE), exist_ok=True)
+        tmp = GEO_CACHE + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(d, f, ensure_ascii=False)
+        os.replace(tmp, GEO_CACHE)
+    except Exception:
+        pass
+
+
+def _private_ip(ip):
+    return (not ip or ip in ('127.0.0.1', '::1', 'localhost')
+            or ip.startswith(('10.', '192.168.', '169.254.'))
+            or any(ip.startswith('172.%d.' % i) for i in range(16, 32)))
+
+
+def geo_lookup(ip, cache):
+    """公网地址 -> 归属地：查第三方 IP 库得到的「推测」，不是设备 GPS 坐标。
+    查不到就返回空，页面显式显示「未查到」，绝不拿旧结果或猜一个地名顶上。"""
+    if not ip:
+        return ''
+    if _private_ip(ip):
+        return '本机 / 内网'
+    hit = cache.get(ip)
+    now = time.time()
+    if hit and (hit.get('loc') or now - hit.get('ts', 0) < 600):
+        return hit.get('loc', '')
+    loc = ''
+    try:
+        from urllib.request import urlopen
+        from urllib.parse import quote as urlquote
+        url = 'https://whois.pconline.com.cn/ipJson.jsp?ip=%s&json=true' % urlquote(ip)
+        with urlopen(url, timeout=2.5) as r:
+            raw = r.read().decode('gbk', 'replace').strip()
+        d = json.loads(raw)
+        if not d.get('err'):
+            parts = []
+            for k in ('pro', 'city', 'region'):
+                v = (d.get(k) or '').strip()
+                if v and v not in parts:
+                    parts.append(v)
+            loc = ' '.join(parts)
+    except Exception:
+        loc = ''
+    cache[ip] = {'loc': loc, 'ts': now}
+    return loc
+
+
+def attach_locations(rows):
+    """同一个上网地址只查一次并缓存；老记录没有地址字段就留空，不冒充、不回填。"""
+    with _geo_lock:
+        cache = _load_geo_cache()
+        dirty = False
+        for r in rows:
+            ip = r.get('ip', '')
+            if not ip:
+                r['loc'] = ''
+                continue
+            if _private_ip(ip):
+                r['loc'] = '本机 / 内网'
+                continue
+            before = cache.get(ip)
+            r['loc'] = geo_lookup(ip, cache)
+            if before != cache.get(ip):
+                dirty = True
+        if dirty:
+            _save_geo_cache(cache)
+    return rows
 
 
 def parse_ts(s):
@@ -59,7 +145,7 @@ def old_records():
                 'sys': 'mms' if 'mms' in path else 'board_old',
                 'act': ACT_CN.get(code, '登录' + code),
                 'acct': acct or '(空)', 'store': store or '',
-                'dev': '', 'ua': '旧版服务端记录',
+                'dev': '', 'ua': '旧版服务端记录', 'ip': '', 'loc': '',
                 'src': '旧版联网登录', 'delay': False,
             })
     return out
@@ -74,13 +160,13 @@ def new_records():
         r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+'
         r'at=(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+'
         r'sys=(\S+)\s+act=(\S+)\s+acct=(\S*)\s+store=(\S*)\s+'
-        r'(?:info=(\S*)\s+)?dev=(\S+)\s+ua=(.*)$')
+        r'(?:info=(\S*)\s+)?dev=(\S+)\s+(?:ip=(\S*)\s+)?ua=(.*)$')
     with open(AUDIT_LOG, encoding='utf-8', errors='replace') as f:
         for line in f:
             m = pat.match(line.strip())
             if not m:
                 continue
-            recv, at, sysx, act, acct, store, info, dev, ua = m.groups()
+            recv, at, sysx, act, acct, store, info, dev, ip, ua = m.groups()
             a, b = parse_ts(at), parse_ts(recv)
             delayed = bool(a and b and abs((b - a).total_seconds()) > 60)
             out.append({
@@ -88,7 +174,8 @@ def new_records():
                 'sys': sysx if sysx in SYS_CN else 'board',
                 'act': ACT_CN.get(act, act),
                 'acct': acct or '(空)', 'store': store or '',
-                'dev': dev, 'ua': ua.strip(), 'info': unquote(info or ''),
+                'dev': dev, 'ua': ua.strip(), 'ip': ip or '', 'loc': '',
+                'info': unquote(info or ''),
                 'src': '新版留痕', 'delay': delayed,
             })
     return out
@@ -124,6 +211,7 @@ def build(scope='today', window_days=0, person=None, out=None):
         rows = [r for r in all_rows if not cutoff or (r['at'] != '-' and r['at'] >= cutoff)]
         if person:
             rows = [r for r in rows if person in r['acct']]
+        rows = attach_locations(rows)
         gen = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         # 用「日志库」最后一条，不用本页最后一条：筛选/窗口下也不会让人误以为记录断了
         last = all_rows[0]['at'] if all_rows else '（暂无记录）'

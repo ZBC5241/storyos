@@ -861,9 +861,15 @@ class Handler(BaseHTTPRequestHandler):
                     _at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(int(gv('ts', 20)) / 1000.0))
                 except Exception:
                     _at = '-'
-                audit_log('at=%s sys=%s act=%s acct=%s store=%s info=%s dev=%s ua=%s' % (
+                # 【18号 2026-11-13 17:30】来源上网地址：serveo 会把真实公网 IP 覆盖写进
+                # X-Forwarded-For / X-Real-IP（17:28 实测：客户端伪造这两个头会被隧道覆盖），
+                # 本机直连则是 127.0.0.1。这里只记地址本身，地名由清单页查库后标注为「推测」。
+                _xff = (self.headers.get('X-Forwarded-For') or '').split(',')[0].strip()
+                _ip = audit_clean(_xff or (self.headers.get('X-Real-IP') or '').strip()
+                                  or self.client_address[0], 45)
+                audit_log('at=%s sys=%s act=%s acct=%s store=%s info=%s dev=%s ip=%s ua=%s' % (
                     _at, _sys, _act, gv('acct', 32), gv('store', 12),
-                    audit_info(gv('info', 160), 160), gv('dev', 32), gv('ua', 120)))
+                    audit_info(gv('info', 160), 160), gv('dev', 32), _ip, gv('ua', 120)))
                 # 每收到一条就顺手刷新「谁来过」清单页，晨哥双击本地文件永远是最新；
                 # 报告失败绝不能影响留痕本身，故独立吞异常。
                 try:
