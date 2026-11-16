@@ -6000,6 +6000,13 @@ function sbPayloadTime(j){
   try{ return new Date(String(j[CUR_STORE].meta.generatedAt || '').replace(' ', 'T')).getTime() || 0; }
   catch(e){ return 0; }
 }
+/* 【18号 2026-11-16 红线】读当前屏幕数据的真实采集时刻。
+   拉回来的数据必须跟它比，只有严格更新才准覆盖——绝不许 CDN 里的旧缓存把新数据盖回去
+   （事故：增值 2042.4/21:32 被线上旧缓存 973.6/21:27 覆盖，页面来回跳）。 */
+function sbCurrentTime(){
+  try{ return new Date(String((DATA && DATA.meta && DATA.meta.generatedAt) || '').replace(' ', 'T')).getTime() || 0; }
+  catch(e){ return 0; }
+}
 function sbDecodeApi(j){
   if(!j) return null;
   if(j.content && j.encoding === 'base64'){          /* API 默认返回：base64 正文 */
@@ -6045,6 +6052,14 @@ function loadRemote(silent, quietFail){
   return sbFetchPublic()
     .then(j => {
       if(!j || !j.ljc || !j.hyc) throw new Error('数据格式不对');
+      /* 【18号 2026-11-16 红线闸门】拉回来的数据比屏幕上的还旧 → 直接丢弃，不覆盖、不更新 sig。
+         GitHub Pages 部署有几分钟延迟，这期间线上 data.json 还是上一档旧数；
+         没有这道闸门，前端每2分钟轮询就会把内嵌的新数据盖回旧值（增值 2042→974 跳变）。 */
+      var inAt = sbPayloadTime(j), curAt = sbCurrentTime();
+      if(inAt && curAt && inAt < curAt){
+        if(!silent) toast('线上数据还是旧的（'+new Date(inAt).toTimeString().slice(0,8)+'），已保留当前更新的数据');
+        return false;
+      }
       const sig = safeSig(j);
       const changed = (sig !== LAST_PAYLOAD_SIG);
       LAST_PAYLOAD_SIG = sig;
