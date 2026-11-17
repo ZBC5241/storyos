@@ -2225,7 +2225,7 @@ html.ios-glass-off body[data-board] *,html.ios-glass-off body[data-board] *::bef
    每次改代码递增 SB_BUILD，用户端首次打开自动强制重载到最新版（本会话只重一次，防循环）。 */
 (function(){
   try{
-    var V = 'sb_20261116_11';
+    var V = 'sb_20261117_12';
     if (localStorage.getItem('sb_build_ver') === V) return;
     if (sessionStorage.getItem('sb_build_reloading') === V) return;
     sessionStorage.setItem('sb_build_reloading', V);
@@ -4239,7 +4239,7 @@ function renderDay(){
     const sub = (cv.name === '毛利')
       ? '<div class="row-g"><span>当日毛利合计</span><em style="font-style:normal">' + (cv.pf ? moneyShort(cv.pf) : '—') + '</em></div>'
       : '<div class="row-g"><span class="' + (neg ? 'stat-low' : '') + '">销 ' + (cv.amt ? moneyShort(cv.amt) : '—') + '</span>'
-      + '<em style="font-style:normal">毛利 ' + (cv.pf ? moneyShort(cv.pf) + ' · 毛利率 ' + (cv.amt ? (cv.pf / cv.amt * 100).toFixed(1) + '%' : '—') : '—') + '</em></div>';
+      + '<em style="font-style:normal">毛利 ' + (cv.pf ? moneyShort(cv.pf) : '—') + '</em></div>';
     h += '<div class="row pp-click' + (neg ? ' warn' : '') + (cv.pf ? '' : ' zero-row') + '" onclick="toggleDayCat(\'' + esc(cv.name) + '\')">'
       + '<div class="row-t">'
         + '<span class="row-n">' + esc(cv.name) + '</span>'
