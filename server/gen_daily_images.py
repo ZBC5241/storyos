@@ -80,9 +80,9 @@ def time_progress(date_str):
 #   字号 1倍 7px ×2 = 14px（原图）
 CSS = """
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#fff;color:#08090c;padding:0;-webkit-font-smoothing:antialiased}
+body{font-family:'Microsoft YaHei','PingFang SC','PingFang SC Semibold',sans-serif;background:#fff;color:#08090c;padding:0;-webkit-font-smoothing:subpixel-antialiased;-webkit-text-stroke:0.5px currentColor}
 .wrap{display:inline-block;padding:0;background:#fff}
-table{border-collapse:collapse;font-size:11px;font-weight:700;table-layout:fixed}
+table{border-collapse:collapse;font-size:11px;font-weight:800;table-layout:fixed}
 td{border:1px solid #b5c6ea;text-align:center;padding:2px 25px;white-space:nowrap;height:40px;color:#08090c;line-height:40px}
 /* 顶部日期条 */
 .hd{position:relative;display:flex;justify-content:flex-start;align-items:center;height:26px;padding:0 8px;font-size:11px;font-weight:700;border:1px solid #b5c6ea;border-bottom:none}
