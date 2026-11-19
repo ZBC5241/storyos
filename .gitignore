@@ -1,6 +1,7 @@
 # storyos 售票厅（B 方案）——敏感文件一律不进 git
 # 口令、签名密钥、经营数据、访问日志只留在本机
 server/config.json
+server/mms_accounts.json
 server/data/
 server/logs/
 server/current_public_url.txt
@@ -18,3 +19,6 @@ sa_page_map_ljc.json
 
 # UI 优化本地备份（含完整页面，仅留本机）
 _backup_design/
+
+# 每日战报图片（含经营数据，只留本机，由 gen_daily_images.py 现场生成）
+server/daily_images/
