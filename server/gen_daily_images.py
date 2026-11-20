@@ -38,7 +38,7 @@ def n(v):
 
 
 def fmt_int(v):
-    return f'{int(round(n(v))):,}'
+    return f'{int(round(n(v)))}'
 
 
 def fmt_rate(v):
@@ -145,7 +145,7 @@ def build_img1(d):
             g = n(dn) - n(t)
             h.append(f'<td class="num">{fmt_int(t)}</td>'
                      f'<td class="num">{fmt_int(dn)}</td>'
-                     f'<td class="num">{g:+,.0f}</td>'
+                     f'<td class="num">{g:+.0f}</td>'
                      f'<td class="num {rate_cls(rt, tp)}">{fmt_rate(rt)}</td>')
         sc = n(perf.get('绩效'))
         h.append(f'<td class="perf-h" style="background:#c00000;color:#fff">{sc:.0f}</td></tr>')
@@ -156,7 +156,7 @@ def build_img1(d):
         t, dn, rt = v.get('task'), v.get('done'), v.get('rate')
         g = n(dn) - n(t)
         h.append(f'<td>{fmt_int(t)}</td><td>{fmt_int(dn)}</td>'
-                 f'<td>{g:+,.0f}</td><td class="{rate_cls(rt, tp)}">{fmt_rate(rt)}</td>')
+                 f'<td>{g:+.0f}</td><td class="{rate_cls(rt, tp)}">{fmt_rate(rt)}</td>')
     h.append(f'<td class="perf-h">{n(store_p.get("绩效")):.0f}</td></tr>')
     h.append('</table>')
 
@@ -234,7 +234,7 @@ def build_img1(d):
         # 增值: 任务/完成/缺口/完成率
         zt, zd = zz.get('task'), zz.get('done')
         h.append(f'<td>{fmt_int(zt)}</td><td>{fmt_int(zd)}</td>'
-                 f'<td>{n(zd)-n(zt):+,.0f}</td><td class="{rate_cls(zz.get("rate"), tp)}">{fmt_rate(zz.get("rate"))}</td>')
+                 f'<td>{n(zd)-n(zt):+.0f}</td><td class="{rate_cls(zz.get("rate"), tp)}">{fmt_rate(zz.get("rate"))}</td>')
         # 健康度: 优惠券/占比/毛利率/增值率
         h.append(f'<td>{fmt_int(jk.get("coupon"))}</td><td>{fmt_rate1(jk.get("ratio"))}</td>'
                  f'<td>{fmt_rate1(jk.get("grossMargin"))}</td><td>{fmt_rate1(jk.get("增值率"))}</td>')
@@ -278,7 +278,7 @@ def build_img2(d):
                 iv = int(round(v))
                 # 缺口表：正数红(还欠)、负数绿(超额)、0绿 —— 底表条件格式口径
                 cls = 'r-r' if iv > 0 else 'r-g'
-                t.append(f'<td class="num {cls if gap else ""}">{iv:,}</td>')
+                t.append(f'<td class="num {cls if gap else ""}">{iv}</td>')
             t.append('</tr>')
         # 合计
         t.append('<tr class="tot-green"><td class="name">合计</td>')
@@ -286,7 +286,7 @@ def build_img2(d):
             s = sum(n((people.get(p, {}).get(field, {}) or {}).get(it, 0)) for p in PEOPLE2 if p in people)
             if gap:
                 s = -s
-            t.append(f'<td>{int(round(s)):,}</td>')
+            t.append(f'<td>{int(round(s))}</td>')
         t.append('</tr></table>')
         return ''.join(t)
 
