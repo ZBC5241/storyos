@@ -83,9 +83,9 @@ CSS = """
 body{font-family:'Microsoft YaHei','PingFang SC','PingFang SC Semibold',sans-serif;background:#fff;color:#08090c;padding:0;-webkit-font-smoothing:subpixel-antialiased;-webkit-text-stroke:0.5px currentColor}
 .wrap{display:inline-block;padding:0;background:#fff}
 table{border-collapse:collapse;font-size:11px;font-weight:800;table-layout:fixed}
-td{border:1px solid #b5c6ea;text-align:center;padding:2px 25px;white-space:nowrap;height:40px;color:#08090c;line-height:40px}
+td{border:1px solid #000;text-align:center;padding:2px 25px;white-space:nowrap;height:40px;color:#08090c;line-height:40px}
 /* 顶部日期条 */
-.hd{position:relative;display:flex;justify-content:flex-start;align-items:center;height:26px;padding:0 8px;font-size:11px;font-weight:700;border:1px solid #b5c6ea;border-bottom:none}
+.hd{position:relative;display:flex;justify-content:flex-start;align-items:center;height:26px;padding:0 8px;font-size:11px;font-weight:700;border:1px solid #000;border-bottom:none}
 .hd .d{color:#08090c}.hd .p{position:absolute;left:50%;transform:translateX(-50%);color:#ff0000;font-size:15px}
 /* 表头 */
 .grp{background:#7f90c8;color:#fff;font-size:11px}
