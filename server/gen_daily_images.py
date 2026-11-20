@@ -80,21 +80,21 @@ def time_progress(date_str):
 #   字号 1倍 7px ×2 = 14px（原图）
 CSS = """
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Microsoft YaHei','PingFang SC','PingFang SC Semibold',sans-serif;background:#fff;color:#08090c;padding:0;-webkit-font-smoothing:subpixel-antialiased;-webkit-text-stroke:0.5px currentColor}
+body{font-family:'Microsoft YaHei','PingFang SC Semibold','PingFang SC',sans-serif;background:#fff;color:#000;padding:0;-webkit-font-smoothing:auto;-webkit-text-stroke:1px currentColor}
 .wrap{display:inline-block;padding:0;background:#fff}
-table{border-collapse:collapse;font-size:11px;font-weight:800;table-layout:fixed}
-td{border:1px solid #000;text-align:center;padding:2px 25px;white-space:nowrap;height:40px;color:#08090c;line-height:40px}
+table{border-collapse:collapse;font-size:17px;font-weight:900;table-layout:fixed}
+td{border:1px solid #000;text-align:center;padding:2px 18px;white-space:nowrap;height:44px;color:#000;line-height:44px}
 /* 顶部日期条 */
-.hd{position:relative;display:flex;justify-content:flex-start;align-items:center;height:26px;padding:0 8px;font-size:11px;font-weight:700;border:1px solid #000;border-bottom:none}
-.hd .d{color:#08090c}.hd .p{position:absolute;left:50%;transform:translateX(-50%);color:#ff0000;font-size:15px}
+.hd{position:relative;display:flex;justify-content:flex-start;align-items:center;height:26px;padding:0 8px;font-size:17px;font-weight:900;border:1px solid #000;border-bottom:none}
+.hd .d{color:#000}.hd .p{position:absolute;left:50%;transform:translateX(-50%);color:#ff0000;font-size:20px}
 /* 表头 */
-.grp{background:#7f90c8;color:#fff;font-size:11px}
-.sub{background:#7f90c8;color:#fff;font-size:11px}
+.grp{background:#7f90c8;color:#fff;font-size:17px}
+.sub{background:#7f90c8;color:#fff;font-size:17px}
 .sub .gap-h{color:#ff0000}
-.name-h{background:#ff0000;color:#fff;font-size:11px}
-.name{background:#ebf0fa;font-size:11px}
-.name-l{background:#ebf0fa;font-size:11px;text-align:left;padding-left:6px}
-.perf-h{background:#c00000;color:#fff;font-size:11px}
+.name-h{background:#ff0000;color:#fff;font-size:17px}
+.name{background:#ebf0fa;font-size:17px}
+.name-l{background:#ebf0fa;font-size:17px;text-align:left;padding-left:6px}
+.perf-h{background:#c00000;color:#fff;font-size:17px}
 /* 数字色(底表默认黑字) */
 .num{color:#08090c}
 .r-g{color:#00b050}.r-r{color:#ff0000}
